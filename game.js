@@ -136,6 +136,42 @@ function spawnEnemies(dungeon, floor, playerStart) {
   return enemies;
 }
 
+// ---- カード定義 ----
+const CARD_LIBRARY = {
+  strike: { id: 'strike', name: 'ストライク', cost: 1, type: 'attack', damage: 6, desc: '6ダメージを与える' },
+  defend: { id: 'defend', name: 'ディフェンド', cost: 1, type: 'skill', block: 5, desc: '5ブロックを得る' },
+  bash: { id: 'bash', name: 'バッシュ', cost: 2, type: 'attack', damage: 10, desc: '10ダメージを与える' },
+  iron_wave: { id: 'iron_wave', name: 'アイアンウェーブ', cost: 1, type: 'attack', damage: 5, block: 5, desc: '5ダメージを与え、5ブロックを得る' },
+  double_strike: { id: 'double_strike', name: 'ダブルストライク', cost: 1, type: 'attack', damage: 4, hits: 2, desc: '4ダメージを2回与える' },
+  shield_bash: { id: 'shield_bash', name: 'シールドバッシュ', cost: 1, type: 'skill', block: 9, desc: '9ブロックを得る' },
+  quick_slash: { id: 'quick_slash', name: 'クイックスラッシュ', cost: 0, type: 'attack', damage: 3, desc: '0コストで3ダメージを与える' },
+};
+
+const STARTER_DECK = [
+  'strike', 'strike', 'strike', 'strike', 'strike',
+  'defend', 'defend', 'defend', 'defend',
+  'bash',
+];
+
+const REWARD_POOL = ['bash', 'iron_wave', 'double_strike', 'shield_bash', 'quick_slash', 'strike', 'defend'];
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = randInt(0, i);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function pickRandomUnique(pool, n) {
+  const copy = [...pool];
+  const result = [];
+  for (let i = 0; i < n && copy.length > 0; i++) {
+    result.push(copy.splice(randInt(0, copy.length - 1), 1)[0]);
+  }
+  return result;
+}
+
 // ---- ゲーム状態 ----
 const state = {
   floor: 1,
@@ -144,10 +180,12 @@ const state = {
   player: {
     x: 0, y: 0,
     hp: 20, maxHp: 20,
-    atk: 4, def: 1,
     level: 1,
+    deck: [],
   },
   gameOver: false,
+  mode: 'explore', // 'explore' | 'battle' | 'reward'
+  battle: null,
   messages: [],
 };
 
@@ -174,36 +212,16 @@ function startFloor(floor, healOnEnter) {
 function newGame() {
   state.player.hp = 20;
   state.player.maxHp = 20;
-  state.player.atk = 4;
-  state.player.def = 1;
   state.player.level = 1;
+  state.player.deck = [...STARTER_DECK];
   state.gameOver = false;
+  state.mode = 'explore';
+  state.battle = null;
   state.messages = [];
   document.getElementById('overlay').style.display = 'none';
+  document.getElementById('battleOverlay').style.display = 'none';
+  document.getElementById('rewardOverlay').style.display = 'none';
   startFloor(1, false);
-}
-
-// ---- 戦闘 ----
-function attack(attacker, defenderHpObj, atkStat, defStat, defenderName) {
-  const variance = randInt(-1, 2);
-  const dmg = Math.max(1, atkStat - defStat + variance);
-  defenderHpObj.hp -= dmg;
-  return dmg;
-}
-
-function playerAttackEnemy(enemy) {
-  const dmg = Math.max(1, state.player.atk - 0 + randInt(-1, 2));
-  enemy.hp -= dmg;
-  log(`あなたは${enemy.name}に${dmg}のダメージ！`);
-  if (enemy.hp <= 0) {
-    enemy.alive = false;
-    log(`${enemy.name}を倒した！`);
-    maybeLevelUp();
-  } else {
-    const edmg = Math.max(1, enemy.atk - state.player.def + randInt(-1, 1));
-    state.player.hp -= edmg;
-    log(`${enemy.name}の反撃！ ${edmg}のダメージを受けた`);
-  }
 }
 
 function maybeLevelUp() {
@@ -212,10 +230,177 @@ function maybeLevelUp() {
     state.player.level++;
     state.player.maxHp += 5;
     state.player.hp = Math.min(state.player.maxHp, state.player.hp + 5);
-    state.player.atk += 1;
     log(`レベルアップ！ Lv${state.player.level}になった`);
   }
 }
+
+// ---- カードバトル ----
+function startBattle(enemy) {
+  state.mode = 'battle';
+  state.battle = {
+    enemy,
+    draw: shuffleArray([...state.player.deck]),
+    hand: [],
+    discard: [],
+    energy: 3,
+    maxEnergy: 3,
+    block: 0,
+  };
+  document.getElementById('battleOverlay').style.display = 'flex';
+  log(`${enemy.name}が現れた！ バトル開始`);
+  startPlayerTurn();
+}
+
+function startPlayerTurn() {
+  const b = state.battle;
+  b.block = 0;
+  b.energy = b.maxEnergy;
+  drawCards(5);
+  renderBattle();
+}
+
+function drawCards(n) {
+  const b = state.battle;
+  for (let i = 0; i < n; i++) {
+    if (b.draw.length === 0) {
+      if (b.discard.length === 0) break;
+      b.draw = shuffleArray(b.discard);
+      b.discard = [];
+      log('捨て札をシャッフルして山札に戻した');
+    }
+    b.hand.push(b.draw.pop());
+  }
+}
+
+function playCard(index) {
+  const b = state.battle;
+  const cardId = b.hand[index];
+  const card = CARD_LIBRARY[cardId];
+  if (card.cost > b.energy) return;
+
+  b.energy -= card.cost;
+  b.hand.splice(index, 1);
+  b.discard.push(cardId);
+
+  if (card.damage) {
+    const hits = card.hits || 1;
+    b.enemy.hp -= card.damage * hits;
+    log(`${card.name}で${b.enemy.name}に${card.damage * hits}ダメージ！`);
+  }
+  if (card.block) {
+    b.block += card.block;
+    log(`${card.name}でブロック${card.block}を得た`);
+  }
+
+  if (b.enemy.hp <= 0) {
+    winBattle();
+    return;
+  }
+  renderBattle();
+}
+
+function endPlayerTurn() {
+  const b = state.battle;
+  b.discard.push(...b.hand);
+  b.hand = [];
+  renderBattle();
+  enemyBattleAttack();
+}
+
+function enemyBattleAttack() {
+  const b = state.battle;
+  const dmg = Math.max(0, b.enemy.atk - b.block);
+  b.block = Math.max(0, b.block - b.enemy.atk);
+  state.player.hp -= dmg;
+  log(`${b.enemy.name}の攻撃！ ${dmg}ダメージを受けた`);
+
+  if (state.player.hp <= 0) {
+    document.getElementById('battleOverlay').style.display = 'none';
+    endGame(false);
+    return;
+  }
+  startPlayerTurn();
+}
+
+function winBattle() {
+  const enemy = state.battle.enemy;
+  enemy.alive = false;
+  log(`${enemy.name}を倒した！`);
+  maybeLevelUp();
+  state.mode = 'reward';
+  document.getElementById('battleOverlay').style.display = 'none';
+  state.battle = null;
+  renderStats();
+  render();
+  showReward();
+}
+
+function buildCardElement(cardId) {
+  const card = CARD_LIBRARY[cardId];
+  const div = document.createElement('div');
+  div.className = `card ${card.type}`;
+  div.innerHTML =
+    `<div class="cost">${card.cost}</div>` +
+    `<div class="cardName">${card.name}</div>` +
+    `<div class="cardDesc">${card.desc}</div>`;
+  return div;
+}
+
+function renderBattle() {
+  const b = state.battle;
+  if (!b) return;
+
+  document.getElementById('battleEnemyName').textContent = b.enemy.name;
+  document.getElementById('battleEnemyHpText').textContent = `${Math.max(0, b.enemy.hp)} / ${b.enemy.maxHp}`;
+  document.getElementById('battleEnemyHpBar').style.width = `${Math.max(0, b.enemy.hp) / b.enemy.maxHp * 100}%`;
+  document.getElementById('battleEnemyIntent').textContent = `次の攻撃: ${b.enemy.atk}ダメージ`;
+  document.getElementById('battlePlayerHp').textContent = `${Math.max(0, state.player.hp)} / ${state.player.maxHp}`;
+  document.getElementById('battlePlayerBlock').textContent = b.block;
+  document.getElementById('battlePlayerEnergy').textContent = `${b.energy} / ${b.maxEnergy}`;
+
+  const handEl = document.getElementById('hand');
+  handEl.innerHTML = '';
+  b.hand.forEach((cardId, idx) => {
+    const card = CARD_LIBRARY[cardId];
+    const div = buildCardElement(cardId);
+    if (card.cost > b.energy) div.classList.add('disabled');
+    div.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      playCard(idx);
+    });
+    handEl.appendChild(div);
+  });
+}
+
+function showReward() {
+  const overlay = document.getElementById('rewardOverlay');
+  const container = document.getElementById('rewardCards');
+  container.innerHTML = '';
+
+  const picks = pickRandomUnique(REWARD_POOL, 3);
+  picks.forEach((cardId) => {
+    const div = buildCardElement(cardId);
+    div.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      state.player.deck.push(cardId);
+      log(`デッキに「${CARD_LIBRARY[cardId].name}」を加えた`);
+      closeReward();
+    });
+    container.appendChild(div);
+  });
+  overlay.style.display = 'flex';
+}
+
+function closeReward() {
+  document.getElementById('rewardOverlay').style.display = 'none';
+  state.mode = 'explore';
+  renderStats();
+}
+
+document.getElementById('skipRewardBtn').addEventListener('click', closeReward);
+document.getElementById('endTurnBtn').addEventListener('click', () => {
+  if (state.mode === 'battle') endPlayerTurn();
+});
 
 // ---- 敵AI ----
 function enemyTurn() {
@@ -226,10 +411,8 @@ function enemyTurn() {
     const dist = Math.abs(dx) + Math.abs(dy);
 
     if (dist === 1) {
-      const dmg = Math.max(1, enemy.atk - state.player.def + randInt(-1, 1));
-      state.player.hp -= dmg;
-      log(`${enemy.name}の攻撃！ ${dmg}のダメージを受けた`);
-      continue;
+      startBattle(enemy);
+      return;
     }
 
     if (dist <= 6) {
@@ -244,10 +427,6 @@ function enemyTurn() {
         enemy.y = ny;
       }
     }
-  }
-
-  if (state.player.hp <= 0) {
-    endGame(false);
   }
 }
 
@@ -265,7 +444,7 @@ const DIRS = {
 };
 
 function tryMove(dx, dy) {
-  if (state.gameOver) return;
+  if (state.mode !== 'explore' || state.gameOver) return;
 
   const nx = state.player.x + dx;
   const ny = state.player.y + dy;
@@ -275,18 +454,14 @@ function tryMove(dx, dy) {
 
   const target = state.enemies.find((en) => en.alive && en.x === nx && en.y === ny);
   if (target) {
-    playerAttackEnemy(target);
-  } else {
-    state.player.x = nx;
-    state.player.y = ny;
-    if (state.dungeon.map[ny][nx] === TILE.STAIRS) {
-      startFloor(state.floor + 1, true);
-      return;
-    }
+    startBattle(target);
+    return;
   }
 
-  if (state.player.hp <= 0) {
-    endGame(false);
+  state.player.x = nx;
+  state.player.y = ny;
+  if (state.dungeon.map[ny][nx] === TILE.STAIRS) {
+    startFloor(state.floor + 1, true);
     return;
   }
 
@@ -375,14 +550,17 @@ function renderStats() {
   document.getElementById('stats').innerHTML =
     `階層: <span>${state.floor}</span><br>` +
     `HP: <span>${Math.max(0, p.hp)} / ${p.maxHp}</span><br>` +
-    `攻撃力: <span>${p.atk}</span> / 防御力: <span>${p.def}</span><br>` +
-    `レベル: <span>${p.level}</span>`;
+    `レベル: <span>${p.level}</span><br>` +
+    `デッキ枚数: <span>${p.deck.length}</span>`;
 }
 
 function renderLog() {
-  const logEl = document.getElementById('log');
-  logEl.innerHTML = state.messages.map((m) => `<div>${m}</div>`).join('');
-  logEl.scrollTop = logEl.scrollHeight;
+  const html = state.messages.map((m) => `<div>${m}</div>`).join('');
+  for (const id of ['log', 'battleLog']) {
+    const el = document.getElementById(id);
+    el.innerHTML = html;
+    el.scrollTop = el.scrollHeight;
+  }
 }
 
 // ---- 開始 ----

@@ -115,6 +115,144 @@
     font-size: 16px;
     cursor: pointer;
   }
+
+  #battleOverlay, #rewardOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 8, 16, 0.96);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    color: #eee;
+    padding: 16px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    z-index: 50;
+  }
+  #battleEnemy {
+    text-align: center;
+    margin: 8px 0 16px;
+  }
+  #battleEnemyName {
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+  .hpBarOuter {
+    width: 220px;
+    max-width: 80vw;
+    height: 14px;
+    background: #333;
+    border: 1px solid #555;
+    border-radius: 7px;
+    overflow: hidden;
+    margin: 4px auto;
+  }
+  .hpBarInner {
+    height: 100%;
+    background: #e05555;
+  }
+  #battleEnemyIntent {
+    color: #ffb74d;
+    font-size: 13px;
+    margin-top: 4px;
+  }
+  #battlePlayer {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+  #battlePlayer span {
+    color: #7fdbff;
+  }
+  #battleLog {
+    width: 100%;
+    max-width: 420px;
+    height: 70px;
+    overflow-y: auto;
+    background: #1b1b1b;
+    border: 1px solid #444;
+    font-size: 12px;
+    padding: 6px;
+    margin-bottom: 14px;
+    box-sizing: border-box;
+  }
+  #hand {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 16px;
+    max-width: 480px;
+  }
+  .card {
+    width: 92px;
+    min-height: 120px;
+    background: #22252b;
+    border: 2px solid #666;
+    border-radius: 10px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    touch-action: manipulation;
+    position: relative;
+    user-select: none;
+  }
+  .card.attack { border-color: #e05555; }
+  .card.skill { border-color: #4fc3f7; }
+  .card .cost {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    background: #333;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+  .card .cardName {
+    font-size: 13px;
+    margin-top: 22px;
+    font-weight: bold;
+  }
+  .card .cardDesc {
+    font-size: 11px;
+    color: #bbb;
+    margin-top: 6px;
+  }
+  .card.disabled {
+    opacity: 0.4;
+  }
+  .card:active {
+    transform: scale(0.96);
+  }
+  #battleControls button, #skipRewardBtn {
+    padding: 10px 24px;
+    font-size: 15px;
+    background: #2a2a2a;
+    color: #eee;
+    border: 1px solid #555;
+    border-radius: 8px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  #rewardTitle {
+    font-size: 16px;
+    margin: 12px 0;
+  }
+  #rewardCards {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
 </style>
 </head>
 <body>
@@ -134,7 +272,7 @@
     <div id="log"></div>
     <div id="help">
       矢印キー / WASD / 画面のボタン: 移動<br>
-      敵に隣接して移動すると攻撃します<br>
+      敵に接触するとカードバトル開始<br>
       &gt; マスで次の階層へ
     </div>
   </div>
@@ -143,6 +281,31 @@
 <div id="overlay">
   <div id="overlayText" style="font-size: 24px;"></div>
   <button id="restartBtn">最初からやり直す</button>
+</div>
+
+<div id="battleOverlay">
+  <div id="battleEnemy">
+    <div id="battleEnemyName"></div>
+    <div class="hpBarOuter"><div id="battleEnemyHpBar" class="hpBarInner"></div></div>
+    <div id="battleEnemyHpText"></div>
+    <div id="battleEnemyIntent"></div>
+  </div>
+  <div id="battlePlayer">
+    <div>HP: <span id="battlePlayerHp"></span></div>
+    <div>ブロック: <span id="battlePlayerBlock"></span></div>
+    <div>エネルギー: <span id="battlePlayerEnergy"></span></div>
+  </div>
+  <div id="battleLog"></div>
+  <div id="hand"></div>
+  <div id="battleControls">
+    <button id="endTurnBtn">ターン終了</button>
+  </div>
+</div>
+
+<div id="rewardOverlay">
+  <div id="rewardTitle">勝利！ カードを1枚選んでデッキに加える</div>
+  <div id="rewardCards"></div>
+  <button id="skipRewardBtn">スキップ</button>
 </div>
 
 <script src="game.js"></script>
