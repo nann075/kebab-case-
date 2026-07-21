@@ -23,6 +23,13 @@ function pickRandomUnique(pool, n) {
   return result;
 }
 
+// ---- 難易度定義 ----
+const DIFFICULTIES = {
+  easy: { label: 'かんたん', playerMaxHp: 26, enemyHpMult: 0.8, enemyAtkMult: 0.8 },
+  normal: { label: 'ふつう', playerMaxHp: 20, enemyHpMult: 1.0, enemyAtkMult: 1.0 },
+  hard: { label: 'むずかしい', playerMaxHp: 16, enemyHpMult: 1.3, enemyAtkMult: 1.3 },
+};
+
 // ---- モンスター定義 ----
 const MONSTER_TYPES = [
   { name: 'スライム', hpBase: 14, atkBase: 4 },
@@ -32,12 +39,14 @@ const MONSTER_TYPES = [
 
 function spawnEnemyForFloor(floor) {
   const type = choice(MONSTER_TYPES);
+  const diff = DIFFICULTIES[state.difficulty];
   const scale = Math.floor((floor - 1) * 1.5);
+  const hp = Math.round((type.hpBase + scale) * diff.enemyHpMult);
   return {
     name: type.name,
-    hp: type.hpBase + scale,
-    maxHp: type.hpBase + scale,
-    atk: type.atkBase + Math.floor((floor - 1) / 2),
+    hp,
+    maxHp: hp,
+    atk: Math.round((type.atkBase + Math.floor((floor - 1) / 2)) * diff.enemyAtkMult),
     alive: true,
   };
 }
@@ -67,6 +76,7 @@ const MAX_FLOOR = 100;
 const state = {
   floor: 1,
   killCount: 0,
+  difficulty: 'normal',
   player: {
     hp: 20, maxHp: 20,
     level: 1,
@@ -94,14 +104,16 @@ function renderLog() {
 function renderStats() {
   const p = state.player;
   document.getElementById('stats').innerHTML =
-    `階層: <span>${state.floor}</span><br>` +
+    `難易度: <span>${DIFFICULTIES[state.difficulty].label}</span> / 階層: <span>${state.floor}</span><br>` +
     `HP: <span>${Math.max(0, p.hp)} / ${p.maxHp}</span><br>` +
     `レベル: <span>${p.level}</span> / デッキ枚数: <span>${p.deck.length}</span>`;
 }
 
-function newGame() {
-  state.player.hp = 20;
-  state.player.maxHp = 20;
+function newGame(difficultyKey) {
+  state.difficulty = difficultyKey;
+  const diff = DIFFICULTIES[difficultyKey];
+  state.player.hp = diff.playerMaxHp;
+  state.player.maxHp = diff.playerMaxHp;
   state.player.level = 1;
   state.player.deck = [...STARTER_DECK];
   state.killCount = 0;
@@ -109,7 +121,15 @@ function newGame() {
   state.messages = [];
   document.getElementById('overlay').style.display = 'none';
   document.getElementById('rewardOverlay').style.display = 'none';
+  document.getElementById('menuOverlay').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
   startFloor(1);
+}
+
+function backToMenu() {
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('menuOverlay').style.display = 'flex';
 }
 
 function startFloor(floor) {
@@ -305,7 +325,9 @@ function endGame(won) {
   overlay.style.display = 'flex';
 }
 
-document.getElementById('restartBtn').addEventListener('click', newGame);
+document.getElementById('restartBtn').addEventListener('click', () => newGame(state.difficulty));
+document.getElementById('titleBtn').addEventListener('click', backToMenu);
 
-// ---- 開始 ----
-newGame();
+document.querySelectorAll('.diffBtn').forEach((btn) => {
+  btn.addEventListener('click', () => newGame(btn.dataset.diff));
+});

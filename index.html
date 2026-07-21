@@ -26,9 +26,65 @@
     max-width: 480px;
     padding: 0 12px 24px;
     box-sizing: border-box;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+  }
+  #menuOverlay {
+    position: fixed;
+    inset: 0;
+    background: #111;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 16px;
+    box-sizing: border-box;
+    z-index: 80;
+  }
+  #menuOverlay h1 {
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+  #menuOverlay p {
+    color: #999;
+    font-size: 13px;
+    margin: 0 0 22px;
+  }
+  #difficultyButtons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 280px;
+  }
+  .diffBtn {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px;
+    background: #1b1b1b;
+    border: 2px solid #555;
+    border-radius: 10px;
+    color: #eee;
+    cursor: pointer;
+    touch-action: manipulation;
+    font-family: inherit;
+  }
+  .diffBtn:active {
+    background: #2a2a2a;
+  }
+  .diffBtn[data-diff="easy"] { border-color: #66bb6a; }
+  .diffBtn[data-diff="normal"] { border-color: #4fc3f7; }
+  .diffBtn[data-diff="hard"] { border-color: #e05555; }
+  .diffName {
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .diffDesc {
+    font-size: 11px;
+    color: #999;
   }
   #stats {
     width: 100%;
@@ -173,11 +229,16 @@
     color: #fff;
     z-index: 60;
   }
+  #overlayButtons {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+  }
   #overlay button {
-    margin-top: 12px;
     padding: 8px 20px;
     font-size: 16px;
     cursor: pointer;
+    touch-action: manipulation;
   }
   #rewardOverlay {
     position: fixed;
@@ -208,7 +269,25 @@
 </style>
 </head>
 <body>
-<h1>カードバトルローグライク</h1>
+<div id="menuOverlay">
+  <h1>カードバトルローグライク</h1>
+  <p>難易度を選んでスタート</p>
+  <div id="difficultyButtons">
+    <button class="diffBtn" data-diff="easy">
+      <span class="diffName">かんたん</span>
+      <span class="diffDesc">HP多め・敵弱め</span>
+    </button>
+    <button class="diffBtn" data-diff="normal">
+      <span class="diffName">ふつう</span>
+      <span class="diffDesc">標準バランス</span>
+    </button>
+    <button class="diffBtn" data-diff="hard">
+      <span class="diffName">むずかしい</span>
+      <span class="diffDesc">HP少なめ・敵強め</span>
+    </button>
+  </div>
+</div>
+
 <div id="app">
   <div id="stats"></div>
 
@@ -238,7 +317,10 @@
 
 <div id="overlay">
   <div id="overlayText" style="font-size: 24px;"></div>
-  <button id="restartBtn">最初からやり直す</button>
+  <div id="overlayButtons">
+    <button id="restartBtn">もう一度</button>
+    <button id="titleBtn">タイトルへ戻る</button>
+  </div>
 </div>
 
 <div id="rewardOverlay">
