@@ -188,7 +188,9 @@ function drawCards(n) {
 
 function playCard(index) {
   const b = state.battle;
+  if (!b || state.mode !== 'battle' || state.gameOver) return;
   const cardId = b.hand[index];
+  if (!cardId) return;
   const card = CARD_LIBRARY[cardId];
   if (card.cost > b.energy) return;
 
@@ -281,6 +283,8 @@ function renderBattle() {
     if (card.cost > b.energy) div.classList.add('disabled');
     div.addEventListener('pointerdown', (e) => {
       e.preventDefault();
+      if (div.dataset.used) return;
+      div.dataset.used = '1';
       playCard(idx);
     });
     handEl.appendChild(div);
@@ -297,6 +301,8 @@ function showReward() {
     const div = buildCardElement(cardId);
     div.addEventListener('pointerdown', (e) => {
       e.preventDefault();
+      if (state.mode !== 'reward' || div.dataset.used) return;
+      div.dataset.used = '1';
       state.player.deck.push(cardId);
       log(`デッキに「${CARD_LIBRARY[cardId].name}」を加えた`);
       closeReward();
@@ -307,6 +313,8 @@ function showReward() {
 }
 
 function closeReward() {
+  if (state.mode !== 'reward') return;
+  state.mode = 'battle';
   document.getElementById('rewardOverlay').style.display = 'none';
   state.player.hp = Math.min(state.player.maxHp, state.player.hp + 5);
   startFloor(state.floor + 1);
