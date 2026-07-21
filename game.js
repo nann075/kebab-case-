@@ -26,8 +26,8 @@ function pickRandomUnique(pool, n) {
 // ---- 難易度定義 ----
 const DIFFICULTIES = {
   easy: { label: 'かんたん', playerMaxHp: 22, enemyHpMult: 0.9, enemyAtkMult: 0.95 },
-  normal: { label: 'ふつう', playerMaxHp: 20, enemyHpMult: 1.0, enemyAtkMult: 1.0 },
-  hard: { label: 'むずかしい', playerMaxHp: 16, enemyHpMult: 1.3, enemyAtkMult: 1.3 },
+  normal: { label: 'ふつう', playerMaxHp: 20, enemyHpMult: 0.95, enemyAtkMult: 0.92 },
+  hard: { label: 'むずかしい', playerMaxHp: 17, enemyHpMult: 1.15, enemyAtkMult: 1.1 },
 };
 
 // ---- モンスター定義 ----
