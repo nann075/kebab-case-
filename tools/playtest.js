@@ -33,6 +33,7 @@ const CCR_CHROMIUM = '/opt/pw-browsers/chromium';
 
 async function playOneRun(page, difficulty) {
   await page.evaluate((diff) => newGame(diff), difficulty);
+  const rewardOffers = [];
 
   for (let turn = 0; turn < MAX_TURNS; turn++) {
     const snap = await page.evaluate(() => ({
@@ -45,24 +46,28 @@ async function playOneRun(page, difficulty) {
         won: state.floor >= MAX_FLOOR,
         floor: state.floor,
       }));
-      return { difficulty, won: final.won, floorReached: final.floor, turns: turn };
+      return { difficulty, won: final.won, floorReached: final.floor, turns: turn, rewardOffers };
     }
 
     if (snap.mode === 'reward') {
-      await page.evaluate(() => {
+      const pick = await page.evaluate(() => {
         // Pick the best-value of the 3 offered cards (same scoring idea as
         // in-battle play) rather than always the first, so the bot's deck
         // growth is a closer proxy for a decent player's choices.
         const cards = Array.from(document.querySelectorAll('#rewardCards .card'));
-        if (cards.length === 0) return;
+        if (cards.length === 0) return null;
         let best = cards[0], bestScore = -Infinity;
         for (const el of cards) {
           const c = CARD_LIBRARY[el.dataset.cardId];
           const score = (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * 1.5 - c.cost;
           if (score > bestScore) { bestScore = score; best = el; }
         }
+        const offered = cards.map((el) => el.dataset.cardId);
+        const chosen = best.dataset.cardId;
         best.dispatchEvent(new Event('pointerdown', { bubbles: true, cancelable: true }));
+        return { offered, chosen };
       });
+      if (pick) rewardOffers.push(pick);
       continue;
     }
 
@@ -101,7 +106,7 @@ async function playOneRun(page, difficulty) {
     });
   }
 
-  return { difficulty, won: false, floorReached: -1, turns: MAX_TURNS, timedOut: true };
+  return { difficulty, won: false, floorReached: -1, turns: MAX_TURNS, timedOut: true, rewardOffers };
 }
 
 async function main() {
@@ -137,6 +142,20 @@ async function main() {
       `avgFloorReached=${avgFloorAll} avgDeathFloor=${avgDeathFloor}` +
       (timeouts ? ` (warning: ${timeouts} run(s) hit the turn cap)` : '')
     );
+
+    const offered = {};
+    const chosen = {};
+    for (const r of rs) {
+      for (const o of (r.rewardOffers || [])) {
+        for (const id of o.offered) offered[id] = (offered[id] || 0) + 1;
+        chosen[o.chosen] = (chosen[o.chosen] || 0) + 1;
+      }
+    }
+    const cardIds = Object.keys(offered).sort();
+    const pickRates = cardIds
+      .map((id) => `${id}:${((chosen[id] || 0) / offered[id] * 100).toFixed(0)}%(${chosen[id] || 0}/${offered[id]})`)
+      .join(' ');
+    console.log(`[${diff}] reward pick-rate: ${pickRates}`);
   }
 
   console.log('RAW_JSON:' + JSON.stringify(results));

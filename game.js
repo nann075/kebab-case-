@@ -54,12 +54,12 @@ function spawnEnemyForFloor(floor) {
 // ---- カード定義 ----
 const CARD_LIBRARY = {
   strike: { id: 'strike', name: 'ストライク', cost: 1, type: 'attack', damage: 6, desc: '6ダメージを与える' },
-  defend: { id: 'defend', name: 'ディフェンド', cost: 1, type: 'skill', block: 5, desc: '5ブロックを得る' },
+  defend: { id: 'defend', name: 'ディフェンド', cost: 1, type: 'skill', block: 6, desc: '6ブロックを得る' },
   bash: { id: 'bash', name: 'バッシュ', cost: 2, type: 'attack', damage: 12, desc: '12ダメージを与える' },
   iron_wave: { id: 'iron_wave', name: 'アイアンウェーブ', cost: 2, type: 'attack', damage: 6, block: 6, desc: '6ダメージを与え、6ブロックを得る' },
   double_strike: { id: 'double_strike', name: 'ダブルストライク', cost: 1, type: 'attack', damage: 3, hits: 2, desc: '3ダメージを2回与える' },
   shield_bash: { id: 'shield_bash', name: 'シールドバッシュ', cost: 1, type: 'skill', block: 6, desc: '6ブロックを得る' },
-  quick_slash: { id: 'quick_slash', name: 'クイックスラッシュ', cost: 0, type: 'attack', damage: 2, desc: '0コストで2ダメージを与える' },
+  quick_slash: { id: 'quick_slash', name: 'クイックスラッシュ', cost: 0, type: 'attack', damage: 4, desc: '0コストで4ダメージを与える' },
 };
 
 const STARTER_DECK = [
