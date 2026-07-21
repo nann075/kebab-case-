@@ -209,6 +209,7 @@ function playCard(index) {
   }
 
   if (state.enemy.hp <= 0) {
+    renderBattle();
     winBattle();
     return;
   }
@@ -232,6 +233,7 @@ function enemyBattleAttack() {
   log(`${state.enemy.name}の攻撃！ ${dmg}ダメージを受けた`);
 
   if (state.player.hp <= 0) {
+    renderBattle();
     endGame(false);
     return;
   }
