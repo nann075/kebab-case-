@@ -209,7 +209,7 @@
   .card:active {
     transform: scale(0.96);
   }
-  #battleControls button, #skipRewardBtn {
+  #battleControls button, #skipRewardBtn, #removeCardBtn, #cancelRemoveBtn {
     padding: 8px 22px;
     font-size: 14px;
     background: #2a2a2a;
@@ -272,6 +272,29 @@
     flex-wrap: wrap;
     justify-content: center;
     margin-bottom: 16px;
+  }
+  #rewardActions {
+    display: flex;
+    gap: 10px;
+  }
+  #removeDeckView {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+  }
+  #removeDeckTitle {
+    font-size: 15px;
+    margin-bottom: 12px;
+    text-align: center;
+    color: #ff8a65;
+  }
+  #removeDeckCards {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 16px;
+    max-width: 440px;
   }
   #buffOverlay {
     position: fixed;
@@ -368,7 +391,15 @@
 <div id="rewardOverlay">
   <div id="rewardTitle">勝利！ カードを1枚選んでデッキに加える</div>
   <div id="rewardCards"></div>
-  <button id="skipRewardBtn">スキップ</button>
+  <div id="rewardActions">
+    <button id="removeCardBtn">デッキから1枚除去する</button>
+    <button id="skipRewardBtn">スキップ</button>
+  </div>
+  <div id="removeDeckView">
+    <div id="removeDeckTitle">除去するカードを選ぶ</div>
+    <div id="removeDeckCards"></div>
+    <button id="cancelRemoveBtn">戻る</button>
+  </div>
 </div>
 
 <div id="buffOverlay">

@@ -349,9 +349,18 @@ function renderBattle() {
 
 function showReward() {
   const overlay = document.getElementById('rewardOverlay');
+  renderRewardPicks();
+  overlay.style.display = 'flex';
+}
+
+function renderRewardPicks() {
+  document.getElementById('rewardTitle').style.display = '';
+  document.getElementById('rewardCards').style.display = 'flex';
+  document.getElementById('rewardActions').style.display = 'flex';
+  document.getElementById('removeDeckView').style.display = 'none';
+
   const container = document.getElementById('rewardCards');
   container.innerHTML = '';
-
   const picks = pickRandomUnique(REWARD_POOL, 3);
   picks.forEach((cardId) => {
     const div = buildCardElement(cardId);
@@ -365,7 +374,32 @@ function showReward() {
     });
     container.appendChild(div);
   });
-  overlay.style.display = 'flex';
+
+  // 1枚を切ってしまうと山札が空になり得るため、除去はデッキが2枚以上の時のみ可能にする。
+  const removeBtn = document.getElementById('removeCardBtn');
+  removeBtn.style.display = state.player.deck.length > 1 ? '' : 'none';
+}
+
+function renderRemoveDeckList() {
+  document.getElementById('rewardTitle').style.display = 'none';
+  document.getElementById('rewardCards').style.display = 'none';
+  document.getElementById('rewardActions').style.display = 'none';
+  document.getElementById('removeDeckView').style.display = 'flex';
+
+  const container = document.getElementById('removeDeckCards');
+  container.innerHTML = '';
+  state.player.deck.forEach((cardId, idx) => {
+    const div = buildCardElement(cardId);
+    div.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      if (state.mode !== 'reward' || div.dataset.used) return;
+      div.dataset.used = '1';
+      const removedId = state.player.deck.splice(idx, 1)[0];
+      log(`デッキから「${CARD_LIBRARY[removedId].name}」を除去した`);
+      closeReward();
+    });
+    container.appendChild(div);
+  });
 }
 
 function closeReward() {
@@ -418,6 +452,14 @@ function closeBuff() {
 }
 
 document.getElementById('skipRewardBtn').addEventListener('click', closeReward);
+document.getElementById('removeCardBtn').addEventListener('click', () => {
+  if (state.mode !== 'reward') return;
+  renderRemoveDeckList();
+});
+document.getElementById('cancelRemoveBtn').addEventListener('click', () => {
+  if (state.mode !== 'reward') return;
+  renderRewardPicks();
+});
 document.getElementById('skipBuffBtn').addEventListener('click', closeBuff);
 document.getElementById('endTurnBtn').addEventListener('click', () => {
   if (state.mode === 'battle') endPlayerTurn();
