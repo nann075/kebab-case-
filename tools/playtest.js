@@ -50,8 +50,18 @@ async function playOneRun(page, difficulty) {
 
     if (snap.mode === 'reward') {
       await page.evaluate(() => {
-        const first = document.querySelector('#rewardCards .card');
-        if (first) first.dispatchEvent(new Event('pointerdown', { bubbles: true, cancelable: true }));
+        // Pick the best-value of the 3 offered cards (same scoring idea as
+        // in-battle play) rather than always the first, so the bot's deck
+        // growth is a closer proxy for a decent player's choices.
+        const cards = Array.from(document.querySelectorAll('#rewardCards .card'));
+        if (cards.length === 0) return;
+        let best = cards[0], bestScore = -Infinity;
+        for (const el of cards) {
+          const c = CARD_LIBRARY[el.dataset.cardId];
+          const score = (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * 1.5 - c.cost;
+          if (score > bestScore) { bestScore = score; best = el; }
+        }
+        best.dispatchEvent(new Event('pointerdown', { bubbles: true, cancelable: true }));
       });
       continue;
     }

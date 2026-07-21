@@ -257,6 +257,7 @@ function buildCardElement(cardId) {
   const card = CARD_LIBRARY[cardId];
   const div = document.createElement('div');
   div.className = `card ${card.type}`;
+  div.dataset.cardId = cardId;
   div.innerHTML =
     `<div class="cost">${card.cost}</div>` +
     `<div class="cardName">${card.name}</div>` +
