@@ -60,6 +60,11 @@ const CARD_LIBRARY = {
   double_strike: { id: 'double_strike', name: 'ダブルストライク', cost: 1, type: 'attack', damage: 3, hits: 2, desc: '3ダメージを2回与える' },
   shield_bash: { id: 'shield_bash', name: 'シールドバッシュ', cost: 1, type: 'skill', block: 6, desc: '6ブロックを得る' },
   quick_slash: { id: 'quick_slash', name: 'クイックスラッシュ', cost: 0, type: 'attack', damage: 5, desc: '0コストで5ダメージを与える' },
+  flame_slash: { id: 'flame_slash', name: 'フレイムスラッシュ', cost: 1, type: 'attack', damage: 7, desc: '7ダメージを与える' },
+  guard_up: { id: 'guard_up', name: 'ガードアップ', cost: 2, type: 'skill', block: 14, desc: '14ブロックを得る' },
+  triple_jab: { id: 'triple_jab', name: 'トリプルジャブ', cost: 2, type: 'attack', damage: 3, hits: 3, desc: '3ダメージを3回与える' },
+  brace: { id: 'brace', name: 'ブレイス', cost: 1, type: 'skill', block: 8, desc: '8ブロックを得る' },
+  finishing_blow: { id: 'finishing_blow', name: 'フィニッシングブロー', cost: 3, type: 'attack', damage: 10, desc: '10ダメージを与える(全エネルギーを消費)' },
 };
 
 const STARTER_DECK = [
@@ -68,9 +73,46 @@ const STARTER_DECK = [
   'bash',
 ];
 
-const REWARD_POOL = ['bash', 'iron_wave', 'double_strike', 'shield_bash', 'quick_slash', 'strike', 'defend'];
+const REWARD_POOL = [
+  'bash', 'iron_wave', 'double_strike', 'shield_bash', 'quick_slash', 'strike', 'defend',
+  'flame_slash', 'guard_up', 'triple_jab', 'brace', 'finishing_blow',
+];
 
 const MAX_FLOOR = 100;
+const BUFF_FLOOR_INTERVAL = 10;
+
+// ---- バフアイテム定義 ----
+// 毎ターン/毎戦闘に累積して効く常時強化は、残り階層数(最大90階分)にわたって
+// 掛け算的に効きすぎてバランスを崩壊させるため採用しない。ここでの効果は
+// すべて「その場限り」の一回性のものに限定する。
+const BUFF_LIBRARY = {
+  vigor: {
+    id: 'vigor', name: '活力の心得', desc: '最大HP+10(回復付き)',
+    apply: () => {
+      state.player.maxHp += 10;
+      state.player.hp = Math.min(state.player.maxHp, state.player.hp + 10);
+    },
+  },
+  renewal: {
+    id: 'renewal', name: '再生の心得', desc: 'HPを20回復する',
+    apply: () => { state.player.hp = Math.min(state.player.maxHp, state.player.hp + 20); },
+  },
+  cleanse: {
+    id: 'cleanse', name: '浄化の心得', desc: 'デッキから最も弱いカードを1枚取り除く',
+    apply: () => {
+      const deck = state.player.deck;
+      if (deck.length === 0) return;
+      let worstIdx = 0, worstScore = Infinity;
+      deck.forEach((cardId, i) => {
+        const c = CARD_LIBRARY[cardId];
+        const score = (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * 1.5 - c.cost;
+        if (score < worstScore) { worstScore = score; worstIdx = i; }
+      });
+      deck.splice(worstIdx, 1);
+    },
+  },
+};
+const BUFF_POOL = ['vigor', 'renewal', 'cleanse'];
 
 // ---- ゲーム状態 ----
 const state = {
@@ -85,7 +127,7 @@ const state = {
   enemy: null,
   battle: null,
   gameOver: false,
-  mode: 'battle', // 'battle' | 'reward'
+  mode: 'battle', // 'battle' | 'reward' | 'buff'
   messages: [],
 };
 
@@ -121,6 +163,7 @@ function newGame(difficultyKey) {
   state.messages = [];
   document.getElementById('overlay').style.display = 'none';
   document.getElementById('rewardOverlay').style.display = 'none';
+  document.getElementById('buffOverlay').style.display = 'none';
   document.getElementById('menuOverlay').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   startFloor(1);
@@ -200,8 +243,9 @@ function playCard(index) {
 
   if (card.damage) {
     const hits = card.hits || 1;
-    state.enemy.hp -= card.damage * hits;
-    log(`${card.name}で${state.enemy.name}に${card.damage * hits}ダメージ！`);
+    const dmg = card.damage * hits;
+    state.enemy.hp -= dmg;
+    log(`${card.name}で${state.enemy.name}に${dmg}ダメージ！`);
   }
   if (card.block) {
     b.block += card.block;
@@ -248,6 +292,12 @@ function winBattle() {
 
   if (state.floor >= MAX_FLOOR) {
     endGame(true);
+    return;
+  }
+
+  if (state.floor % BUFF_FLOOR_INTERVAL === 0) {
+    state.mode = 'buff';
+    showBuffChoice();
     return;
   }
 
@@ -324,7 +374,49 @@ function closeReward() {
   startFloor(state.floor + 1);
 }
 
+function buildBuffElement(buffId) {
+  const buff = BUFF_LIBRARY[buffId];
+  const div = document.createElement('div');
+  div.className = 'card buff';
+  div.dataset.buffId = buffId;
+  div.innerHTML =
+    `<div class="cardName">${buff.name}</div>` +
+    `<div class="cardDesc">${buff.desc}</div>`;
+  return div;
+}
+
+function showBuffChoice() {
+  const overlay = document.getElementById('buffOverlay');
+  const container = document.getElementById('buffCards');
+  container.innerHTML = '';
+
+  const picks = pickRandomUnique(BUFF_POOL, 3);
+  picks.forEach((buffId) => {
+    const div = buildBuffElement(buffId);
+    div.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      if (state.mode !== 'buff' || div.dataset.used) return;
+      div.dataset.used = '1';
+      BUFF_LIBRARY[buffId].apply();
+      log(`「${BUFF_LIBRARY[buffId].name}」を獲得した！`);
+      closeBuff();
+    });
+    container.appendChild(div);
+  });
+  overlay.style.display = 'flex';
+}
+
+function closeBuff() {
+  if (state.mode !== 'buff') return;
+  state.mode = 'battle';
+  document.getElementById('buffOverlay').style.display = 'none';
+  renderStats();
+  state.player.hp = Math.min(state.player.maxHp, state.player.hp + 16);
+  startFloor(state.floor + 1);
+}
+
 document.getElementById('skipRewardBtn').addEventListener('click', closeReward);
+document.getElementById('skipBuffBtn').addEventListener('click', closeBuff);
 document.getElementById('endTurnBtn').addEventListener('click', () => {
   if (state.mode === 'battle') endPlayerTurn();
 });

@@ -24,7 +24,7 @@
   #app {
     width: 100%;
     max-width: 480px;
-    padding: 0 12px 24px;
+    padding: 8px 12px 12px;
     box-sizing: border-box;
     display: none;
     flex-direction: column;
@@ -90,9 +90,10 @@
     width: 100%;
     background: #1b1b1b;
     border: 1px solid #444;
-    padding: 8px;
-    margin-bottom: 12px;
-    line-height: 1.6;
+    padding: 6px 8px;
+    margin-bottom: 8px;
+    line-height: 1.4;
+    font-size: 13px;
     box-sizing: border-box;
   }
   #stats span {
@@ -100,21 +101,21 @@
   }
   #battleEnemy {
     text-align: center;
-    margin-bottom: 14px;
+    margin-bottom: 8px;
   }
   #battleEnemyName {
-    font-size: 18px;
-    margin-bottom: 4px;
+    font-size: 16px;
+    margin-bottom: 2px;
   }
   .hpBarOuter {
-    width: 220px;
+    width: 200px;
     max-width: 80vw;
-    height: 14px;
+    height: 12px;
     background: #333;
     border: 1px solid #555;
-    border-radius: 7px;
+    border-radius: 6px;
     overflow: hidden;
-    margin: 4px auto;
+    margin: 2px auto;
   }
   .hpBarInner {
     height: 100%;
@@ -122,27 +123,27 @@
   }
   #battleEnemyIntent {
     color: #ffb74d;
-    font-size: 13px;
-    margin-top: 4px;
+    font-size: 12px;
+    margin-top: 2px;
   }
   #battlePlayer {
     display: flex;
-    gap: 16px;
-    margin-bottom: 12px;
-    font-size: 14px;
+    gap: 14px;
+    margin-bottom: 8px;
+    font-size: 13px;
   }
   #battlePlayer span {
     color: #7fdbff;
   }
   #log {
     width: 100%;
-    height: 90px;
+    height: 56px;
     overflow-y: auto;
     background: #1b1b1b;
     border: 1px solid #444;
-    font-size: 12px;
-    padding: 6px;
-    margin-bottom: 14px;
+    font-size: 11px;
+    padding: 5px;
+    margin-bottom: 8px;
     box-sizing: border-box;
   }
   #log div:last-child {
@@ -150,23 +151,24 @@
   }
   #hand {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
     justify-content: center;
     align-content: flex-start;
     align-items: flex-start;
     /* Reserve room for a full 2-row hand so playing/discarding cards never
        shifts the End Turn button underneath a finger mid-tap. */
-    min-height: 288px;
-    margin-bottom: 16px;
+    min-height: 214px;
+    margin-bottom: 8px;
   }
   .card {
-    width: 92px;
-    min-height: 120px;
+    box-sizing: border-box;
+    width: 84px;
+    height: 104px;
     background: #22252b;
     border: 2px solid #666;
-    border-radius: 10px;
-    padding: 6px;
+    border-radius: 9px;
+    padding: 5px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -180,26 +182,26 @@
   .card.skill { border-color: #4fc3f7; }
   .card .cost {
     position: absolute;
-    top: 4px;
-    left: 4px;
+    top: 3px;
+    left: 3px;
     background: #333;
     border-radius: 50%;
-    width: 22px;
-    height: 22px;
+    width: 19px;
+    height: 19px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 11px;
   }
   .card .cardName {
-    font-size: 13px;
-    margin-top: 22px;
+    font-size: 11.5px;
+    margin-top: 18px;
     font-weight: bold;
   }
   .card .cardDesc {
-    font-size: 11px;
+    font-size: 9.5px;
     color: #bbb;
-    margin-top: 6px;
+    margin-top: 4px;
   }
   .card.disabled {
     opacity: 0.4;
@@ -208,8 +210,8 @@
     transform: scale(0.96);
   }
   #battleControls button, #skipRewardBtn {
-    padding: 10px 24px;
-    font-size: 15px;
+    padding: 8px 22px;
+    font-size: 14px;
     background: #2a2a2a;
     color: #eee;
     border: 1px solid #555;
@@ -218,7 +220,7 @@
     touch-action: manipulation;
   }
   #help {
-    font-size: 12px;
+    font-size: 11px;
     color: #888;
     margin-top: 4px;
     text-align: center;
@@ -270,6 +272,41 @@
     flex-wrap: wrap;
     justify-content: center;
     margin-bottom: 16px;
+  }
+  #buffOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 14, 2, 0.96);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #eee;
+    padding: 16px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    z-index: 55;
+  }
+  #buffTitle {
+    font-size: 17px;
+    margin: 12px 0;
+    text-align: center;
+    color: #ffd54f;
+  }
+  #buffCards {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .card.buff {
+    border-color: #ffd54f;
+    justify-content: center;
+  }
+  .card.buff .cardName {
+    margin-top: 0;
+    color: #ffd54f;
   }
 </style>
 </head>
@@ -332,6 +369,12 @@
   <div id="rewardTitle">勝利！ カードを1枚選んでデッキに加える</div>
   <div id="rewardCards"></div>
   <button id="skipRewardBtn">スキップ</button>
+</div>
+
+<div id="buffOverlay">
+  <div id="buffTitle">節目のボーナス！ 特別な強化を1つ選ぼう</div>
+  <div id="buffCards"></div>
+  <button id="skipBuffBtn">スキップ</button>
 </div>
 
 <script src="game.js"></script>

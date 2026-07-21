@@ -71,6 +71,23 @@ async function playOneRun(page, difficulty) {
       continue;
     }
 
+    if (snap.mode === 'buff') {
+      await page.evaluate(() => {
+        // Heal if badly hurt, otherwise thin the deck; maxHP boost as fallback.
+        const hpRatio = state.player.hp / state.player.maxHp;
+        const priority = hpRatio < 0.5 ? ['renewal', 'vigor', 'cleanse'] : ['cleanse', 'vigor', 'renewal'];
+        const cards = Array.from(document.querySelectorAll('#buffCards .card'));
+        if (cards.length === 0) return;
+        let best = cards[0], bestRank = Infinity;
+        for (const el of cards) {
+          const rank = priority.indexOf(el.dataset.buffId);
+          if (rank !== -1 && rank < bestRank) { bestRank = rank; best = el; }
+        }
+        best.dispatchEvent(new Event('pointerdown', { bubbles: true, cancelable: true }));
+      });
+      continue;
+    }
+
     // Battle turn: greedily play cards, then end turn.
     await page.evaluate(() => {
       function scoreCard(c, wantBlock) {
