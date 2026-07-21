@@ -55,11 +55,11 @@ function spawnEnemyForFloor(floor) {
 const CARD_LIBRARY = {
   strike: { id: 'strike', name: 'ストライク', cost: 1, type: 'attack', damage: 6, desc: '6ダメージを与える' },
   defend: { id: 'defend', name: 'ディフェンド', cost: 1, type: 'skill', block: 5, desc: '5ブロックを得る' },
-  bash: { id: 'bash', name: 'バッシュ', cost: 2, type: 'attack', damage: 10, desc: '10ダメージを与える' },
-  iron_wave: { id: 'iron_wave', name: 'アイアンウェーブ', cost: 1, type: 'attack', damage: 5, block: 5, desc: '5ダメージを与え、5ブロックを得る' },
-  double_strike: { id: 'double_strike', name: 'ダブルストライク', cost: 1, type: 'attack', damage: 4, hits: 2, desc: '4ダメージを2回与える' },
-  shield_bash: { id: 'shield_bash', name: 'シールドバッシュ', cost: 1, type: 'skill', block: 9, desc: '9ブロックを得る' },
-  quick_slash: { id: 'quick_slash', name: 'クイックスラッシュ', cost: 0, type: 'attack', damage: 3, desc: '0コストで3ダメージを与える' },
+  bash: { id: 'bash', name: 'バッシュ', cost: 2, type: 'attack', damage: 13, desc: '13ダメージを与える' },
+  iron_wave: { id: 'iron_wave', name: 'アイアンウェーブ', cost: 2, type: 'attack', damage: 5, block: 5, desc: '5ダメージを与え、5ブロックを得る' },
+  double_strike: { id: 'double_strike', name: 'ダブルストライク', cost: 1, type: 'attack', damage: 3, hits: 2, desc: '3ダメージを2回与える' },
+  shield_bash: { id: 'shield_bash', name: 'シールドバッシュ', cost: 1, type: 'skill', block: 6, desc: '6ブロックを得る' },
+  quick_slash: { id: 'quick_slash', name: 'クイックスラッシュ', cost: 0, type: 'attack', damage: 2, desc: '0コストで2ダメージを与える' },
 };
 
 const STARTER_DECK = [
