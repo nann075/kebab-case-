@@ -1,22 +1,5 @@
 'use strict';
 
-// ---- 定数 ----
-const TILE_SIZE = 20;
-const MAP_W = 36;
-const MAP_H = 24;
-const ROOM_ATTEMPTS = 14;
-
-const TILE = { WALL: 0, FLOOR: 1, STAIRS: 2 };
-
-const COLORS = {
-  wall: '#2a2a2a',
-  floor: '#4a4a4a',
-  stairs: '#e8c547',
-  player: '#4fc3f7',
-  enemy: '#e05555',
-  playerText: '#e8f9ff',
-};
-
 // ---- ユーティリティ ----
 function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -24,116 +7,39 @@ function randInt(min, max) {
 function choice(arr) {
   return arr[randInt(0, arr.length - 1)];
 }
-
-// ---- ダンジョン生成 ----
-function rectsOverlap(a, b, pad) {
-  return (
-    a.x - pad < b.x + b.w &&
-    a.x + a.w + pad > b.x &&
-    a.y - pad < b.y + b.h &&
-    a.y + a.h + pad > b.y
-  );
-}
-
-function carveRoom(map, room) {
-  for (let y = room.y; y < room.y + room.h; y++) {
-    for (let x = room.x; x < room.x + room.w; x++) {
-      map[y][x] = TILE.FLOOR;
-    }
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = randInt(0, i);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
+  return arr;
 }
-
-function carveCorridor(map, x1, y1, x2, y2) {
-  let x = x1, y = y1;
-  const horizontalFirst = Math.random() < 0.5;
-  if (horizontalFirst) {
-    while (x !== x2) { map[y][x] = TILE.FLOOR; x += x < x2 ? 1 : -1; }
-    while (y !== y2) { map[y][x] = TILE.FLOOR; y += y < y2 ? 1 : -1; }
-  } else {
-    while (y !== y2) { map[y][x] = TILE.FLOOR; y += y < y2 ? 1 : -1; }
-    while (x !== x2) { map[y][x] = TILE.FLOOR; x += x < x2 ? 1 : -1; }
+function pickRandomUnique(pool, n) {
+  const copy = [...pool];
+  const result = [];
+  for (let i = 0; i < n && copy.length > 0; i++) {
+    result.push(copy.splice(randInt(0, copy.length - 1), 1)[0]);
   }
-  map[y][x] = TILE.FLOOR;
-}
-
-function roomCenter(room) {
-  return {
-    x: Math.floor(room.x + room.w / 2),
-    y: Math.floor(room.y + room.h / 2),
-  };
-}
-
-function generateDungeon() {
-  const map = [];
-  for (let y = 0; y < MAP_H; y++) {
-    map.push(new Array(MAP_W).fill(TILE.WALL));
-  }
-
-  const rooms = [];
-  for (let i = 0; i < ROOM_ATTEMPTS; i++) {
-    const w = randInt(4, 8);
-    const h = randInt(3, 6);
-    const x = randInt(1, MAP_W - w - 2);
-    const y = randInt(1, MAP_H - h - 2);
-    const newRoom = { x, y, w, h };
-
-    if (rooms.some((r) => rectsOverlap(r, newRoom, 1))) continue;
-
-    carveRoom(map, newRoom);
-    if (rooms.length > 0) {
-      const prevCenter = roomCenter(rooms[rooms.length - 1]);
-      const newCenter = roomCenter(newRoom);
-      carveCorridor(map, prevCenter.x, prevCenter.y, newCenter.x, newCenter.y);
-    }
-    rooms.push(newRoom);
-  }
-
-  // 万一部屋が1つ以下の場合は再生成
-  if (rooms.length < 2) return generateDungeon();
-
-  const startRoom = rooms[0];
-  const stairsRoom = rooms[rooms.length - 1];
-  const start = roomCenter(startRoom);
-  const stairs = roomCenter(stairsRoom);
-  map[stairs.y][stairs.x] = TILE.STAIRS;
-
-  return { map, rooms, start, stairs };
+  return result;
 }
 
 // ---- モンスター定義 ----
 const MONSTER_TYPES = [
-  { name: 'スライム', symbol: 's', hpBase: 4, atkBase: 1, color: '#66bb6a' },
-  { name: 'ゴブリン', symbol: 'g', hpBase: 6, atkBase: 2, color: '#e05555' },
-  { name: 'オーク', symbol: 'o', hpBase: 10, atkBase: 3, color: '#ab47bc' },
+  { name: 'スライム', hpBase: 14, atkBase: 4 },
+  { name: 'ゴブリン', hpBase: 20, atkBase: 6 },
+  { name: 'オーク', hpBase: 28, atkBase: 8 },
 ];
 
-function spawnEnemies(dungeon, floor, playerStart) {
-  const enemies = [];
-  const enemyCount = Math.min(3 + Math.floor(floor / 2), 10);
-  const rooms = dungeon.rooms.slice(1); // 開始部屋には出さない
-
-  for (let i = 0; i < enemyCount && rooms.length > 0; i++) {
-    const room = choice(rooms);
-    const x = randInt(room.x, room.x + room.w - 1);
-    const y = randInt(room.y, room.y + room.h - 1);
-
-    if (dungeon.map[y][x] !== TILE.FLOOR) continue;
-    if (x === playerStart.x && y === playerStart.y) continue;
-    if (enemies.some((e) => e.x === x && e.y === y)) continue;
-
-    const type = choice(MONSTER_TYPES);
-    const scale = 1 + Math.floor((floor - 1) * 0.5);
-    enemies.push({
-      x, y,
-      name: type.name,
-      color: type.color,
-      hp: type.hpBase + scale * 2,
-      maxHp: type.hpBase + scale * 2,
-      atk: type.atkBase + Math.floor((floor - 1) / 2),
-      alive: true,
-    });
-  }
-  return enemies;
+function spawnEnemyForFloor(floor) {
+  const type = choice(MONSTER_TYPES);
+  const scale = Math.floor((floor - 1) * 1.5);
+  return {
+    name: type.name,
+    hp: type.hpBase + scale,
+    maxHp: type.hpBase + scale,
+    atk: type.atkBase + Math.floor((floor - 1) / 2),
+    alive: true,
+  };
 }
 
 // ---- カード定義 ----
@@ -155,37 +61,19 @@ const STARTER_DECK = [
 
 const REWARD_POOL = ['bash', 'iron_wave', 'double_strike', 'shield_bash', 'quick_slash', 'strike', 'defend'];
 
-function shuffleArray(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = randInt(0, i);
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-function pickRandomUnique(pool, n) {
-  const copy = [...pool];
-  const result = [];
-  for (let i = 0; i < n && copy.length > 0; i++) {
-    result.push(copy.splice(randInt(0, copy.length - 1), 1)[0]);
-  }
-  return result;
-}
-
 // ---- ゲーム状態 ----
 const state = {
   floor: 1,
-  dungeon: null,
-  enemies: [],
+  killCount: 0,
   player: {
-    x: 0, y: 0,
     hp: 20, maxHp: 20,
     level: 1,
     deck: [],
   },
-  gameOver: false,
-  mode: 'explore', // 'explore' | 'battle' | 'reward'
+  enemy: null,
   battle: null,
+  gameOver: false,
+  mode: 'battle', // 'battle' | 'reward'
   messages: [],
 };
 
@@ -195,18 +83,18 @@ function log(msg) {
   renderLog();
 }
 
-function startFloor(floor, healOnEnter) {
-  state.floor = floor;
-  state.dungeon = generateDungeon();
-  state.player.x = state.dungeon.start.x;
-  state.player.y = state.dungeon.start.y;
-  state.enemies = spawnEnemies(state.dungeon, floor, state.dungeon.start);
-  if (healOnEnter) {
-    state.player.hp = Math.min(state.player.maxHp, state.player.hp + 5);
-  }
-  log(`--- ${floor}階に降り立った ---`);
-  renderStats();
-  render();
+function renderLog() {
+  const el = document.getElementById('log');
+  el.innerHTML = state.messages.map((m) => `<div>${m}</div>`).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function renderStats() {
+  const p = state.player;
+  document.getElementById('stats').innerHTML =
+    `階層: <span>${state.floor}</span><br>` +
+    `HP: <span>${Math.max(0, p.hp)} / ${p.maxHp}</span><br>` +
+    `レベル: <span>${p.level}</span> / デッキ枚数: <span>${p.deck.length}</span>`;
 }
 
 function newGame() {
@@ -214,19 +102,25 @@ function newGame() {
   state.player.maxHp = 20;
   state.player.level = 1;
   state.player.deck = [...STARTER_DECK];
+  state.killCount = 0;
   state.gameOver = false;
-  state.mode = 'explore';
-  state.battle = null;
   state.messages = [];
   document.getElementById('overlay').style.display = 'none';
-  document.getElementById('battleOverlay').style.display = 'none';
   document.getElementById('rewardOverlay').style.display = 'none';
-  startFloor(1, false);
+  startFloor(1);
+}
+
+function startFloor(floor) {
+  state.floor = floor;
+  state.enemy = spawnEnemyForFloor(floor);
+  log(`--- ${floor}階 ---`);
+  renderStats();
+  startBattle();
 }
 
 function maybeLevelUp() {
-  const killed = state.enemies.filter((e) => !e.alive).length;
-  if (killed > 0 && killed % 3 === 0) {
+  state.killCount++;
+  if (state.killCount % 3 === 0) {
     state.player.level++;
     state.player.maxHp += 5;
     state.player.hp = Math.min(state.player.maxHp, state.player.hp + 5);
@@ -235,10 +129,9 @@ function maybeLevelUp() {
 }
 
 // ---- カードバトル ----
-function startBattle(enemy) {
+function startBattle() {
   state.mode = 'battle';
   state.battle = {
-    enemy,
     draw: shuffleArray([...state.player.deck]),
     hand: [],
     discard: [],
@@ -246,8 +139,7 @@ function startBattle(enemy) {
     maxEnergy: 3,
     block: 0,
   };
-  document.getElementById('battleOverlay').style.display = 'flex';
-  log(`${enemy.name}が現れた！ バトル開始`);
+  log(`${state.enemy.name}が現れた！`);
   startPlayerTurn();
 }
 
@@ -284,15 +176,15 @@ function playCard(index) {
 
   if (card.damage) {
     const hits = card.hits || 1;
-    b.enemy.hp -= card.damage * hits;
-    log(`${card.name}で${b.enemy.name}に${card.damage * hits}ダメージ！`);
+    state.enemy.hp -= card.damage * hits;
+    log(`${card.name}で${state.enemy.name}に${card.damage * hits}ダメージ！`);
   }
   if (card.block) {
     b.block += card.block;
     log(`${card.name}でブロック${card.block}を得た`);
   }
 
-  if (b.enemy.hp <= 0) {
+  if (state.enemy.hp <= 0) {
     winBattle();
     return;
   }
@@ -309,13 +201,12 @@ function endPlayerTurn() {
 
 function enemyBattleAttack() {
   const b = state.battle;
-  const dmg = Math.max(0, b.enemy.atk - b.block);
-  b.block = Math.max(0, b.block - b.enemy.atk);
+  const dmg = Math.max(0, state.enemy.atk - b.block);
+  b.block = Math.max(0, b.block - state.enemy.atk);
   state.player.hp -= dmg;
-  log(`${b.enemy.name}の攻撃！ ${dmg}ダメージを受けた`);
+  log(`${state.enemy.name}の攻撃！ ${dmg}ダメージを受けた`);
 
   if (state.player.hp <= 0) {
-    document.getElementById('battleOverlay').style.display = 'none';
     endGame(false);
     return;
   }
@@ -323,15 +214,11 @@ function enemyBattleAttack() {
 }
 
 function winBattle() {
-  const enemy = state.battle.enemy;
-  enemy.alive = false;
-  log(`${enemy.name}を倒した！`);
+  state.enemy.alive = false;
+  log(`${state.enemy.name}を倒した！`);
   maybeLevelUp();
   state.mode = 'reward';
-  document.getElementById('battleOverlay').style.display = 'none';
-  state.battle = null;
   renderStats();
-  render();
   showReward();
 }
 
@@ -350,10 +237,10 @@ function renderBattle() {
   const b = state.battle;
   if (!b) return;
 
-  document.getElementById('battleEnemyName').textContent = b.enemy.name;
-  document.getElementById('battleEnemyHpText').textContent = `${Math.max(0, b.enemy.hp)} / ${b.enemy.maxHp}`;
-  document.getElementById('battleEnemyHpBar').style.width = `${Math.max(0, b.enemy.hp) / b.enemy.maxHp * 100}%`;
-  document.getElementById('battleEnemyIntent').textContent = `次の攻撃: ${b.enemy.atk}ダメージ`;
+  document.getElementById('battleEnemyName').textContent = state.enemy.name;
+  document.getElementById('battleEnemyHpText').textContent = `${Math.max(0, state.enemy.hp)} / ${state.enemy.maxHp}`;
+  document.getElementById('battleEnemyHpBar').style.width = `${Math.max(0, state.enemy.hp) / state.enemy.maxHp * 100}%`;
+  document.getElementById('battleEnemyIntent').textContent = `次の攻撃: ${state.enemy.atk}ダメージ`;
   document.getElementById('battlePlayerHp').textContent = `${Math.max(0, state.player.hp)} / ${state.player.maxHp}`;
   document.getElementById('battlePlayerBlock').textContent = b.block;
   document.getElementById('battlePlayerEnergy').textContent = `${b.energy} / ${b.maxEnergy}`;
@@ -393,8 +280,8 @@ function showReward() {
 
 function closeReward() {
   document.getElementById('rewardOverlay').style.display = 'none';
-  state.mode = 'explore';
-  renderStats();
+  state.player.hp = Math.min(state.player.maxHp, state.player.hp + 5);
+  startFloor(state.floor + 1);
 }
 
 document.getElementById('skipRewardBtn').addEventListener('click', closeReward);
@@ -402,166 +289,15 @@ document.getElementById('endTurnBtn').addEventListener('click', () => {
   if (state.mode === 'battle') endPlayerTurn();
 });
 
-// ---- 敵AI ----
-function enemyTurn() {
-  for (const enemy of state.enemies) {
-    if (!enemy.alive) continue;
-    const dx = state.player.x - enemy.x;
-    const dy = state.player.y - enemy.y;
-    const dist = Math.abs(dx) + Math.abs(dy);
-
-    if (dist === 1) {
-      startBattle(enemy);
-      return;
-    }
-
-    if (dist <= 6) {
-      let nx = enemy.x, ny = enemy.y;
-      if (Math.abs(dx) > Math.abs(dy)) {
-        nx += dx > 0 ? 1 : -1;
-      } else {
-        ny += dy > 0 ? 1 : -1;
-      }
-      if (canMoveTo(nx, ny) && !(nx === state.player.x && ny === state.player.y)) {
-        enemy.x = nx;
-        enemy.y = ny;
-      }
-    }
-  }
-}
-
-function canMoveTo(x, y) {
-  if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) return false;
-  if (state.dungeon.map[y][x] === TILE.WALL) return false;
-  if (state.enemies.some((e) => e.alive && e.x === x && e.y === y)) return false;
-  return true;
-}
-
-// ---- 入力処理 ----
-const DIRS = {
-  ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
-  w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0],
-};
-
-function tryMove(dx, dy) {
-  if (state.mode !== 'explore' || state.gameOver) return;
-
-  const nx = state.player.x + dx;
-  const ny = state.player.y + dy;
-
-  if (nx < 0 || ny < 0 || nx >= MAP_W || ny >= MAP_H) return;
-  if (state.dungeon.map[ny][nx] === TILE.WALL) return;
-
-  const target = state.enemies.find((en) => en.alive && en.x === nx && en.y === ny);
-  if (target) {
-    startBattle(target);
-    return;
-  }
-
-  state.player.x = nx;
-  state.player.y = ny;
-  if (state.dungeon.map[ny][nx] === TILE.STAIRS) {
-    startFloor(state.floor + 1, true);
-    return;
-  }
-
-  enemyTurn();
-  renderStats();
-  render();
-}
-
-function handleKey(e) {
-  const dir = DIRS[e.key];
-  if (!dir) return;
-  e.preventDefault();
-  tryMove(dir[0], dir[1]);
-}
-
 function endGame(won) {
   state.gameOver = true;
   const overlay = document.getElementById('overlay');
   const text = document.getElementById('overlayText');
-  text.textContent = won ? 'クリア！' : 'ゲームオーバー';
+  text.textContent = won ? 'クリア！' : `ゲームオーバー (${state.floor}階で力尽きた)`;
   overlay.style.display = 'flex';
-  render();
 }
 
-window.addEventListener('keydown', handleKey);
 document.getElementById('restartBtn').addEventListener('click', newGame);
-
-// ---- 画面上の方向ボタン (スマホ向け) ----
-const DPAD_DIRS = {
-  dpUp: [0, -1], dpDown: [0, 1], dpLeft: [-1, 0], dpRight: [1, 0],
-};
-for (const id in DPAD_DIRS) {
-  const btn = document.getElementById(id);
-  const [dx, dy] = DPAD_DIRS[id];
-  btn.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
-    tryMove(dx, dy);
-  });
-}
-
-// ---- 描画 ----
-const canvas = document.getElementById('game');
-canvas.width = MAP_W * TILE_SIZE;
-canvas.height = MAP_H * TILE_SIZE;
-const ctx = canvas.getContext('2d');
-
-function render() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const map = state.dungeon.map;
-
-  for (let y = 0; y < MAP_H; y++) {
-    for (let x = 0; x < MAP_W; x++) {
-      const t = map[y][x];
-      let color = COLORS.wall;
-      if (t === TILE.FLOOR) color = COLORS.floor;
-      if (t === TILE.STAIRS) color = COLORS.stairs;
-      ctx.fillStyle = color;
-      ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE - 1, TILE_SIZE - 1);
-    }
-  }
-
-  for (const enemy of state.enemies) {
-    if (!enemy.alive) continue;
-    ctx.fillStyle = enemy.color;
-    ctx.beginPath();
-    ctx.arc(
-      enemy.x * TILE_SIZE + TILE_SIZE / 2,
-      enemy.y * TILE_SIZE + TILE_SIZE / 2,
-      TILE_SIZE / 2 - 3, 0, Math.PI * 2
-    );
-    ctx.fill();
-  }
-
-  ctx.fillStyle = COLORS.player;
-  ctx.beginPath();
-  ctx.arc(
-    state.player.x * TILE_SIZE + TILE_SIZE / 2,
-    state.player.y * TILE_SIZE + TILE_SIZE / 2,
-    TILE_SIZE / 2 - 2, 0, Math.PI * 2
-  );
-  ctx.fill();
-}
-
-function renderStats() {
-  const p = state.player;
-  document.getElementById('stats').innerHTML =
-    `階層: <span>${state.floor}</span><br>` +
-    `HP: <span>${Math.max(0, p.hp)} / ${p.maxHp}</span><br>` +
-    `レベル: <span>${p.level}</span><br>` +
-    `デッキ枚数: <span>${p.deck.length}</span>`;
-}
-
-function renderLog() {
-  const html = state.messages.map((m) => `<div>${m}</div>`).join('');
-  for (const id of ['log', 'battleLog']) {
-    const el = document.getElementById(id);
-    el.innerHTML = html;
-    el.scrollTop = el.scrollHeight;
-  }
-}
 
 // ---- 開始 ----
 newGame();

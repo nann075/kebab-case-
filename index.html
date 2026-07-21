@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>ブラウザローグライク</title>
+<title>カードバトルローグライク</title>
 <style>
   html, body {
     margin: 0;
@@ -21,117 +21,30 @@
     font-size: 18px;
     margin: 12px 0 4px;
   }
-  #wrap {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    align-items: flex-start;
-    justify-content: center;
+  #app {
     width: 100%;
-    max-width: 960px;
-    padding: 0 8px;
+    max-width: 480px;
+    padding: 0 12px 24px;
     box-sizing: border-box;
-  }
-  #boardCol {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
-  }
-  canvas {
-    background: #000;
-    border: 2px solid #555;
-    image-rendering: pixelated;
-    max-width: 100%;
-    height: auto;
-  }
-  #dpad {
-    display: grid;
-    grid-template-columns: repeat(3, 56px);
-    grid-template-rows: repeat(3, 56px);
-    gap: 4px;
-    user-select: none;
-  }
-  #dpad button {
-    font-size: 22px;
-    background: #2a2a2a;
-    color: #eee;
-    border: 1px solid #555;
-    border-radius: 8px;
-    touch-action: manipulation;
-    cursor: pointer;
-  }
-  #dpad button:active {
-    background: #444;
-  }
-  #dpUp { grid-column: 2; grid-row: 1; }
-  #dpLeft { grid-column: 1; grid-row: 2; }
-  #dpRight { grid-column: 3; grid-row: 2; }
-  #dpDown { grid-column: 2; grid-row: 3; }
-  #sidebar {
-    width: 220px;
-    max-width: 100%;
   }
   #stats {
+    width: 100%;
     background: #1b1b1b;
     border: 1px solid #444;
     padding: 8px;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     line-height: 1.6;
+    box-sizing: border-box;
   }
   #stats span {
     color: #7fdbff;
   }
-  #log {
-    background: #1b1b1b;
-    border: 1px solid #444;
-    padding: 8px;
-    height: 300px;
-    overflow-y: auto;
-    font-size: 12px;
-    line-height: 1.5;
-  }
-  #log div:last-child {
-    color: #fff;
-  }
-  #help {
-    font-size: 12px;
-    color: #888;
-    margin-top: 8px;
-  }
-  #overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.8);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    color: #fff;
-  }
-  #overlay button {
-    margin-top: 12px;
-    padding: 8px 20px;
-    font-size: 16px;
-    cursor: pointer;
-  }
-
-  #battleOverlay, #rewardOverlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(8, 8, 16, 0.96);
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    color: #eee;
-    padding: 16px;
-    box-sizing: border-box;
-    overflow-y: auto;
-    z-index: 50;
-  }
   #battleEnemy {
     text-align: center;
-    margin: 8px 0 16px;
+    margin-bottom: 14px;
   }
   #battleEnemyName {
     font-size: 18px;
@@ -165,10 +78,9 @@
   #battlePlayer span {
     color: #7fdbff;
   }
-  #battleLog {
+  #log {
     width: 100%;
-    max-width: 420px;
-    height: 70px;
+    height: 90px;
     overflow-y: auto;
     background: #1b1b1b;
     border: 1px solid #444;
@@ -177,13 +89,15 @@
     margin-bottom: 14px;
     box-sizing: border-box;
   }
+  #log div:last-child {
+    color: #fff;
+  }
   #hand {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
     justify-content: center;
     margin-bottom: 16px;
-    max-width: 480px;
   }
   .card {
     width: 92px;
@@ -242,9 +156,47 @@
     cursor: pointer;
     touch-action: manipulation;
   }
+  #help {
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
+    text-align: center;
+  }
+  #overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: #fff;
+    z-index: 60;
+  }
+  #overlay button {
+    margin-top: 12px;
+    padding: 8px 20px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  #rewardOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 8, 16, 0.96);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #eee;
+    padding: 16px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    z-index: 50;
+  }
   #rewardTitle {
     font-size: 16px;
     margin: 12px 0;
+    text-align: center;
   }
   #rewardCards {
     display: flex;
@@ -256,50 +208,37 @@
 </style>
 </head>
 <body>
-<h1>ブラウザローグライク</h1>
-<div id="wrap">
-  <div id="boardCol">
-    <canvas id="game"></canvas>
-    <div id="dpad">
-      <button id="dpUp">▲</button>
-      <button id="dpLeft">◀</button>
-      <button id="dpRight">▶</button>
-      <button id="dpDown">▼</button>
-    </div>
-  </div>
-  <div id="sidebar">
-    <div id="stats"></div>
-    <div id="log"></div>
-    <div id="help">
-      矢印キー / WASD / 画面のボタン: 移動<br>
-      敵に接触するとカードバトル開始<br>
-      &gt; マスで次の階層へ
-    </div>
-  </div>
-</div>
+<h1>カードバトルローグライク</h1>
+<div id="app">
+  <div id="stats"></div>
 
-<div id="overlay">
-  <div id="overlayText" style="font-size: 24px;"></div>
-  <button id="restartBtn">最初からやり直す</button>
-</div>
-
-<div id="battleOverlay">
   <div id="battleEnemy">
     <div id="battleEnemyName"></div>
     <div class="hpBarOuter"><div id="battleEnemyHpBar" class="hpBarInner"></div></div>
     <div id="battleEnemyHpText"></div>
     <div id="battleEnemyIntent"></div>
   </div>
+
   <div id="battlePlayer">
     <div>HP: <span id="battlePlayerHp"></span></div>
     <div>ブロック: <span id="battlePlayerBlock"></span></div>
     <div>エネルギー: <span id="battlePlayerEnergy"></span></div>
   </div>
-  <div id="battleLog"></div>
+
+  <div id="log"></div>
+
   <div id="hand"></div>
+
   <div id="battleControls">
     <button id="endTurnBtn">ターン終了</button>
   </div>
+
+  <div id="help">カードをタップして使用、敵を倒すと次の階層へ</div>
+</div>
+
+<div id="overlay">
+  <div id="overlayText" style="font-size: 24px;"></div>
+  <button id="restartBtn">最初からやり直す</button>
 </div>
 
 <div id="rewardOverlay">
