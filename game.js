@@ -61,6 +61,8 @@ const STARTER_DECK = [
 
 const REWARD_POOL = ['bash', 'iron_wave', 'double_strike', 'shield_bash', 'quick_slash', 'strike', 'defend'];
 
+const MAX_FLOOR = 100;
+
 // ---- ゲーム状態 ----
 const state = {
   floor: 1,
@@ -217,8 +219,14 @@ function winBattle() {
   state.enemy.alive = false;
   log(`${state.enemy.name}を倒した！`);
   maybeLevelUp();
-  state.mode = 'reward';
   renderStats();
+
+  if (state.floor >= MAX_FLOOR) {
+    endGame(true);
+    return;
+  }
+
+  state.mode = 'reward';
   showReward();
 }
 
@@ -293,7 +301,7 @@ function endGame(won) {
   state.gameOver = true;
   const overlay = document.getElementById('overlay');
   const text = document.getElementById('overlayText');
-  text.textContent = won ? 'クリア！' : `ゲームオーバー (${state.floor}階で力尽きた)`;
+  text.textContent = won ? `${MAX_FLOOR}階制覇！ ゲームクリア！` : `ゲームオーバー (${state.floor}階で力尽きた)`;
   overlay.style.display = 'flex';
 }
 
