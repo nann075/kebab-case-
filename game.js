@@ -40,13 +40,13 @@ const MONSTER_TYPES = [
 function spawnEnemyForFloor(floor) {
   const type = choice(MONSTER_TYPES);
   const diff = DIFFICULTIES[state.difficulty];
-  const scale = Math.floor((floor - 1) * 1.5);
+  const scale = Math.floor((floor - 1) * 0.3);
   const hp = Math.round((type.hpBase + scale) * diff.enemyHpMult);
   return {
     name: type.name,
     hp,
     maxHp: hp,
-    atk: Math.round((type.atkBase + Math.floor((floor - 1) / 2)) * diff.enemyAtkMult),
+    atk: Math.round((type.atkBase + Math.floor((floor - 1) / 8)) * diff.enemyAtkMult),
     alive: true,
   };
 }
@@ -55,8 +55,8 @@ function spawnEnemyForFloor(floor) {
 const CARD_LIBRARY = {
   strike: { id: 'strike', name: 'ストライク', cost: 1, type: 'attack', damage: 6, desc: '6ダメージを与える' },
   defend: { id: 'defend', name: 'ディフェンド', cost: 1, type: 'skill', block: 5, desc: '5ブロックを得る' },
-  bash: { id: 'bash', name: 'バッシュ', cost: 2, type: 'attack', damage: 13, desc: '13ダメージを与える' },
-  iron_wave: { id: 'iron_wave', name: 'アイアンウェーブ', cost: 2, type: 'attack', damage: 5, block: 5, desc: '5ダメージを与え、5ブロックを得る' },
+  bash: { id: 'bash', name: 'バッシュ', cost: 2, type: 'attack', damage: 12, desc: '12ダメージを与える' },
+  iron_wave: { id: 'iron_wave', name: 'アイアンウェーブ', cost: 2, type: 'attack', damage: 6, block: 6, desc: '6ダメージを与え、6ブロックを得る' },
   double_strike: { id: 'double_strike', name: 'ダブルストライク', cost: 1, type: 'attack', damage: 3, hits: 2, desc: '3ダメージを2回与える' },
   shield_bash: { id: 'shield_bash', name: 'シールドバッシュ', cost: 1, type: 'skill', block: 6, desc: '6ブロックを得る' },
   quick_slash: { id: 'quick_slash', name: 'クイックスラッシュ', cost: 0, type: 'attack', damage: 2, desc: '0コストで2ダメージを与える' },
@@ -144,8 +144,8 @@ function maybeLevelUp() {
   state.killCount++;
   if (state.killCount % 3 === 0) {
     state.player.level++;
-    state.player.maxHp += 5;
-    state.player.hp = Math.min(state.player.maxHp, state.player.hp + 5);
+    state.player.maxHp += 11;
+    state.player.hp = Math.min(state.player.maxHp, state.player.hp + 11);
     log(`レベルアップ！ Lv${state.player.level}になった`);
   }
 }
@@ -318,7 +318,7 @@ function closeReward() {
   if (state.mode !== 'reward') return;
   state.mode = 'battle';
   document.getElementById('rewardOverlay').style.display = 'none';
-  state.player.hp = Math.min(state.player.maxHp, state.player.hp + 5);
+  state.player.hp = Math.min(state.player.maxHp, state.player.hp + 16);
   startFloor(state.floor + 1);
 }
 
