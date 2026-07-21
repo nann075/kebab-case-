@@ -1,12 +1,12 @@
 ---
 name: implement-approved-idea
-description: Runs the full code -> test -> evaluate pipeline for an idea the user has already approved (from /propose-game-idea or described directly) -- game-coding-agent implements it, game-qa-debugger checks for bugs, game-balance-tester checks balance/reachability impact. Use once the user has said yes to a specific proposed idea for this game.
+description: Runs the full code -> test -> evaluate -> dopamine pipeline for an idea the user has already approved (from /propose-game-idea or described directly) -- game-coding-agent implements it, game-qa-debugger checks for bugs, game-balance-tester checks balance/reachability impact, game-dopamine-evaluator checks whether it adds/removes tension and excitement. Use once the user has said yes to a specific proposed idea for this game.
 argument-hint: "[the approved idea, if not already clear from context]"
 ---
 
-Run the remaining three stages of the idea -> code -> test -> evaluate
-pipeline for an idea the user has just approved (from the most recent
-`/propose-game-idea` proposal in this conversation, or from
+Run the remaining four stages of the idea -> code -> test -> evaluate ->
+dopamine pipeline for an idea the user has just approved (from the most
+recent `/propose-game-idea` proposal in this conversation, or from
 `$ARGUMENTS` / the user's message if they described it directly).
 
 1. **Code**: launch `game-coding-agent` with the exact approved idea
@@ -25,11 +25,16 @@ pipeline for an idea the user has just approved (from the most recent
    difficulty curve. If it finds a real problem (e.g. the new card
    dominates every reward screen, or win rate collapsed/exploded), it
    should tune and re-verify per its own instructions.
-4. **Report**: summarize the full cycle for the user — what was
+4. **Dopamine**: launch `game-dopamine-evaluator` to check whether the
+   change made the game more or less tense/exciting (near-death saves,
+   heartbreak losses, clutch blocks, run-to-run variance, decision
+   closeness) — not just whether the numbers are "balanced." A change
+   can pass balance checks and still flatten the game's excitement, or
+   vice versa; report both.
+5. **Report**: summarize the full cycle for the user — what was
    implemented, what QA found (if anything), what the balance impact
-   was (before/after numbers if the evaluator ran them), and commit
-   hashes. Keep it scannable, not a transcript of each subagent's full
-   output.
+   was, what the tension/excitement read was, and commit hashes. Keep it
+   scannable, not a transcript of each subagent's full output.
 
 Run stages sequentially (each depends on the previous one's code state),
 not in parallel. If any stage reports something ambiguous or risky that
