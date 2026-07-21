@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>ブラウザローグライク</title>
 <style>
   html, body {
@@ -13,6 +14,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    touch-action: manipulation;
+    overscroll-behavior: none;
   }
   h1 {
     font-size: 18px;
@@ -20,16 +23,54 @@
   }
   #wrap {
     display: flex;
+    flex-wrap: wrap;
     gap: 16px;
     align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    max-width: 960px;
+    padding: 0 8px;
+    box-sizing: border-box;
+  }
+  #boardCol {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
   }
   canvas {
     background: #000;
     border: 2px solid #555;
     image-rendering: pixelated;
+    max-width: 100%;
+    height: auto;
   }
+  #dpad {
+    display: grid;
+    grid-template-columns: repeat(3, 56px);
+    grid-template-rows: repeat(3, 56px);
+    gap: 4px;
+    user-select: none;
+  }
+  #dpad button {
+    font-size: 22px;
+    background: #2a2a2a;
+    color: #eee;
+    border: 1px solid #555;
+    border-radius: 8px;
+    touch-action: manipulation;
+    cursor: pointer;
+  }
+  #dpad button:active {
+    background: #444;
+  }
+  #dpUp { grid-column: 2; grid-row: 1; }
+  #dpLeft { grid-column: 1; grid-row: 2; }
+  #dpRight { grid-column: 3; grid-row: 2; }
+  #dpDown { grid-column: 2; grid-row: 3; }
   #sidebar {
     width: 220px;
+    max-width: 100%;
   }
   #stats {
     background: #1b1b1b;
@@ -79,12 +120,20 @@
 <body>
 <h1>ブラウザローグライク</h1>
 <div id="wrap">
-  <canvas id="game"></canvas>
+  <div id="boardCol">
+    <canvas id="game"></canvas>
+    <div id="dpad">
+      <button id="dpUp">▲</button>
+      <button id="dpLeft">◀</button>
+      <button id="dpRight">▶</button>
+      <button id="dpDown">▼</button>
+    </div>
+  </div>
   <div id="sidebar">
     <div id="stats"></div>
     <div id="log"></div>
     <div id="help">
-      矢印キー / WASD: 移動<br>
+      矢印キー / WASD / 画面のボタン: 移動<br>
       敵に隣接して移動すると攻撃します<br>
       &gt; マスで次の階層へ
     </div>

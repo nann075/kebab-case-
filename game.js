@@ -264,14 +264,11 @@ const DIRS = {
   w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0],
 };
 
-function handleKey(e) {
+function tryMove(dx, dy) {
   if (state.gameOver) return;
-  const dir = DIRS[e.key];
-  if (!dir) return;
-  e.preventDefault();
 
-  const nx = state.player.x + dir[0];
-  const ny = state.player.y + dir[1];
+  const nx = state.player.x + dx;
+  const ny = state.player.y + dy;
 
   if (nx < 0 || ny < 0 || nx >= MAP_W || ny >= MAP_H) return;
   if (state.dungeon.map[ny][nx] === TILE.WALL) return;
@@ -298,6 +295,13 @@ function handleKey(e) {
   render();
 }
 
+function handleKey(e) {
+  const dir = DIRS[e.key];
+  if (!dir) return;
+  e.preventDefault();
+  tryMove(dir[0], dir[1]);
+}
+
 function endGame(won) {
   state.gameOver = true;
   const overlay = document.getElementById('overlay');
@@ -309,6 +313,19 @@ function endGame(won) {
 
 window.addEventListener('keydown', handleKey);
 document.getElementById('restartBtn').addEventListener('click', newGame);
+
+// ---- 画面上の方向ボタン (スマホ向け) ----
+const DPAD_DIRS = {
+  dpUp: [0, -1], dpDown: [0, 1], dpLeft: [-1, 0], dpRight: [1, 0],
+};
+for (const id in DPAD_DIRS) {
+  const btn = document.getElementById(id);
+  const [dx, dy] = DPAD_DIRS[id];
+  btn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    tryMove(dx, dy);
+  });
+}
 
 // ---- 描画 ----
 const canvas = document.getElementById('game');
