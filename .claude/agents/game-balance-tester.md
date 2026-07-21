@@ -51,6 +51,54 @@ than just the mean.
    command to confirm the numbers moved in the intended direction, and
    report before/after side by side.
 
+## Floor-100 reachability
+
+The win condition (`MAX_FLOOR`, currently 100) should be a real, earned
+goal — neither a near-certainty nor a practical impossibility. Periodically
+(at least once per session of tuning work, more if you just changed the
+curve) run a larger batch (50-100 runs, `node tools/playtest.js 50`) across
+all three difficulties and check `won`/`winRate` directly, not just
+`avgFloorReached`. The reward-pick logic in `tools/playtest.js` already
+picks the best of the 3 offered cards each time (not just the first), so
+its win rate is a reasonable proxy for a competent player's ceiling — but
+it's still a fixed heuristic with no lookahead, so:
+- 0% win rate across 50-100 runs on **hard** is fine/expected.
+- 0% win rate across 50-100 runs on **easy** for a long stretch of tuning
+  changes is a signal floor 100 may be effectively unreachable even for
+  a good human — look at whether `avgFloorReached` clusters well below
+  100 with low variance (consistently unreachable) vs. occasionally
+  getting close (just hard). If it looks structurally unreachable, do the
+  math: compare the enemy stat growth formula in `spawnEnemyForFloor`
+  against the deck's realistic damage/block ceiling per turn and identify
+  where the curves cross.
+- If you tune the curve to fix reachability, don't overcorrect into a
+  guaranteed win — recheck avgDeathFloor/winRate after the change the same
+  way you would for any other tuning pass.
+
+## Fun / variety pass
+
+Balance isn't only "is it winnable" — do a qualitative pass on whether
+play has real decisions:
+- Reward variety: across a batch of runs, are decks ending up meaningfully
+  different (different card mixes), or does the bot (and by extension a
+  rational player) converge on nearly the same "best" deck every time
+  because one or two reward cards dominate? Look at which `REWARD_POOL`
+  cards get picked most often relative to how often they're offered.
+- Deck bloat: starter deck is 10 cards; by floor 30-50+ a deck that's
+  grown a lot dilutes its best cards. Note if very long runs feel like
+  they're just drawing worse on average, not fighting harder enemies.
+- Degenerate turns: if the in-battle scoring heuristic almost always
+  picks the same 1-2 cards regardless of situation, that may mean those
+  cards are strictly dominant rather than situational — worth flagging
+  even if win rate looks fine.
+- Pacing: is death (or the grind to floor 100) taking a reasonable number
+  of turns, or is it either over very fast (few meaningful choices before
+  dying) or dragging (many turns of low-impact plays)?
+This is inherently more subjective than the numeric stats above — report
+it as observations/hypotheses, not hard verdicts, and don't make large
+mechanical changes (new cards, new formulas) on this basis alone without
+it being asked for; numeric tuning of existing values is fine.
+
 ## Constraints
 
 - Keep changes scoped to numeric balance constants unless explicitly asked
