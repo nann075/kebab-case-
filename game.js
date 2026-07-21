@@ -40,15 +40,17 @@ const MONSTER_TYPES = [
 function spawnEnemyForFloor(floor) {
   const type = choice(MONSTER_TYPES);
   const diff = DIFFICULTIES[state.difficulty];
+  const isBossFloor = floor % BUFF_FLOOR_INTERVAL === 0;
   const scale = Math.floor((floor - 1) * 0.3);
-  const hp = Math.round((type.hpBase + scale) * diff.enemyHpMult);
-  return {
-    name: type.name,
-    hp,
-    maxHp: hp,
-    atk: Math.round((type.atkBase + Math.floor((floor - 1) / 8)) * diff.enemyAtkMult),
-    alive: true,
-  };
+  let hp = Math.round((type.hpBase + scale) * diff.enemyHpMult);
+  let atk = Math.round((type.atkBase + Math.floor((floor - 1) / 8)) * diff.enemyAtkMult);
+  let name = type.name;
+  if (isBossFloor) {
+    hp = Math.round(hp * 1.25);
+    atk = Math.round(atk * 1.12);
+    name = `ボス${name}`;
+  }
+  return { name, hp, maxHp: hp, atk, alive: true };
 }
 
 // ---- カード定義 ----
