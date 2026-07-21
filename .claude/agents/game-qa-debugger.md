@@ -77,6 +77,49 @@ as `tools/playtest.js`:
   low severity).
 - Tap the same reward card element twice quickly — confirm the card isn't
   added to the deck twice.
+- **Coordinate-based rapid tapping, not just element-reference dispatch.**
+  Bugs can hide in *layout*, not just state logic: use
+  `page.mouse.click(x, y)` at a card's `boundingBox()` center, then
+  immediately re-check what element now sits at that *same* (x, y) after
+  the resulting re-render (`document.elementFromPoint`), across a full
+  turn (play every card in a 5-card hand one by one). If a control like
+  `#endTurnBtn` drifts into a spot a card used to occupy, a player tapping
+  the same screen area in quick succession can trigger it by accident —
+  this is a real bug class (confirmed once already: playing down to a
+  3-card hand collapsed the hand from 2 rows to 1, and after the last
+  card, `#endTurnBtn` ended up almost exactly where that card had been).
+  Report the pixel delta of any control that moves as cards are
+  played/discarded, at both desktop and mobile widths.
+
+## Log analysis
+
+The in-battle log (`state.messages`, rendered into `#log`) is not just
+flavor text — read it the way a confused player would, because that's
+often the first and only signal something's wrong (this is literally how
+a real bug was found: a player pasted a log excerpt and said it felt like
+the turn advanced "on its own," which traced back to the layout-shift bug
+above). For every playthrough you run (both your own probes and, if you
+invoke it, `tools/playtest.js`'s bot runs — pull `state.messages` at the
+end, or watch it turn-by-turn via repeated `page.evaluate`), scan the
+message sequence for:
+- **Duplicate consecutive lines** (e.g. the same
+  `「◯◯で◯◯に◯ダメージ！」` twice in a row) with no player action between
+  them that would legitimately explain two plays — a strong signal of
+  double-processing, not just "the player used two copies of the same
+  card" (check `state.battle.discard`/energy deltas to tell those apart).
+- **An enemy-attack line (`「◯◯の攻撃！」`) not preceded by a
+  `「--- ターン終了 ---」` marker** since the player's last card play —
+  if you find one, the enemy attacked without an explicit turn-end
+  action, which is exactly the class of bug found above.
+- **Numbers in the log not matching the actual state delta** — e.g. a
+  line claims N damage but `state.enemy.hp` (or `state.player.hp`)
+  changed by a different amount.
+- Any sequence where a message implies something happened that the
+  corresponding `state` fields don't back up.
+If you add new log-producing actions while probing, don't assume the log
+is complete — cross-check it against `state` directly rather than trusting
+the text alone, but *do* still read the text, since that's what a human
+player actually sees and reacts to.
 
 ## Reporting
 

@@ -219,6 +219,7 @@ function endPlayerTurn() {
   const b = state.battle;
   b.discard.push(...b.hand);
   b.hand = [];
+  log('--- ターン終了 ---');
   renderBattle();
   enemyBattleAttack();
 }
