@@ -153,6 +153,11 @@
     gap: 8px;
     flex-wrap: wrap;
     justify-content: center;
+    align-content: flex-start;
+    align-items: flex-start;
+    /* Reserve room for a full 2-row hand so playing/discarding cards never
+       shifts the End Turn button underneath a finger mid-tap. */
+    min-height: 288px;
     margin-bottom: 16px;
   }
   .card {
