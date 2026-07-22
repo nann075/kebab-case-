@@ -50,7 +50,23 @@ function spawnEnemyForFloor(floor) {
     atk = Math.round(atk * 1.12);
     name = `ボス${name}`;
   }
-  return { name, hp, maxHp: hp, atk, alive: true };
+  const enemy = {
+    name, hp, maxHp: hp, atk, alive: true,
+    isBoss: isBossFloor,
+    actionType: 'attack', // 'attack' | 'charge' | 'guard' -- only randomized for bosses
+    chargeBonus: false,
+  };
+  if (isBossFloor) rollBossAction(enemy);
+  return enemy;
+}
+
+// ボスのみ、次ターンの行動を「攻撃60% / 溜め20% / 防御20%」の重みで抽選する。
+// 通常敵は常に'attack'のまま(挙動は今までと完全に同じ)。
+function rollBossAction(enemy) {
+  const r = Math.random();
+  if (r < 0.6) enemy.actionType = 'attack';
+  else if (r < 0.8) enemy.actionType = 'charge';
+  else enemy.actionType = 'guard';
 }
 
 // ---- カード定義 ----
@@ -273,10 +289,35 @@ function endPlayerTurn() {
 
 function enemyBattleAttack() {
   const b = state.battle;
-  const dmg = Math.max(0, state.enemy.atk - b.block);
-  b.block = Math.max(0, b.block - state.enemy.atk);
-  state.player.hp -= dmg;
-  log(`${state.enemy.name}の攻撃！ ${dmg}ダメージを受けた`);
+  const enemy = state.enemy;
+
+  if (!enemy.isBoss) {
+    // 通常敵: これまでどおり常に攻撃する
+    const dmg = Math.max(0, enemy.atk - b.block);
+    b.block = Math.max(0, b.block - enemy.atk);
+    state.player.hp -= dmg;
+    log(`${enemy.name}の攻撃！ ${dmg}ダメージを受けた`);
+  } else {
+    // ボス: 事前に予告(intent)していた行動をそのまま解決する
+    if (enemy.actionType === 'charge') {
+      enemy.chargeBonus = true;
+      log(`${enemy.name}は力を溜めている...`);
+    } else if (enemy.actionType === 'guard') {
+      log(`${enemy.name}は防御の構えを取った`);
+    } else {
+      let atk = enemy.atk;
+      if (enemy.chargeBonus) {
+        atk *= 2;
+        enemy.chargeBonus = false;
+      }
+      const dmg = Math.max(0, atk - b.block);
+      b.block = Math.max(0, b.block - atk);
+      state.player.hp -= dmg;
+      log(`${enemy.name}の攻撃！ ${dmg}ダメージを受けた`);
+    }
+    // 次ターンの行動をここで抽選し、次に見せるintentと実際の解決を一致させる
+    rollBossAction(enemy);
+  }
 
   if (state.player.hp <= 0) {
     renderBattle();
@@ -319,6 +360,16 @@ function buildCardElement(cardId) {
   return div;
 }
 
+function getEnemyIntentText(enemy) {
+  if (enemy.isBoss) {
+    if (enemy.actionType === 'charge') return '次のターン: 溜めている(次は2倍ダメージ)';
+    if (enemy.actionType === 'guard') return '次のターン: 防御態勢';
+    const atk = enemy.chargeBonus ? enemy.atk * 2 : enemy.atk;
+    return `次の攻撃: ${atk}ダメージ`;
+  }
+  return `次の攻撃: ${enemy.atk}ダメージ`;
+}
+
 function renderBattle() {
   const b = state.battle;
   if (!b) return;
@@ -326,7 +377,7 @@ function renderBattle() {
   document.getElementById('battleEnemyName').textContent = state.enemy.name;
   document.getElementById('battleEnemyHpText').textContent = `${Math.max(0, state.enemy.hp)} / ${state.enemy.maxHp}`;
   document.getElementById('battleEnemyHpBar').style.width = `${Math.max(0, state.enemy.hp) / state.enemy.maxHp * 100}%`;
-  document.getElementById('battleEnemyIntent').textContent = `次の攻撃: ${state.enemy.atk}ダメージ`;
+  document.getElementById('battleEnemyIntent').textContent = getEnemyIntentText(state.enemy);
   document.getElementById('battlePlayerHp').textContent = `${Math.max(0, state.player.hp)} / ${state.player.maxHp}`;
   document.getElementById('battlePlayerBlock').textContent = b.block;
   document.getElementById('battlePlayerEnergy').textContent = `${b.energy} / ${b.maxEnergy}`;
