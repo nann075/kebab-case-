@@ -217,12 +217,12 @@ function rollBossAction(enemy) {
 // starはカードの強さの目安(1〜3)。数値が高いほど強力で、報酬画面での
 // 出現率も低くなる(pickWeightedRewardCards参照)。
 const CARD_LIBRARY = {
-  strike: { id: 'strike', name: 'ストライク', cost: 1, type: 'attack', damage: 6, star: 3, desc: '6ダメージを与える' },
+  strike: { id: 'strike', name: 'ストライク', cost: 1, type: 'attack', damage: 6, star: 1, desc: '6ダメージを与える' },
   defend: { id: 'defend', name: 'ディフェンド', cost: 1, type: 'skill', block: 6, star: 1, desc: '6ブロックを得る' },
   bash: { id: 'bash', name: 'バッシュ', cost: 2, type: 'attack', damage: 12, star: 3, desc: '12ダメージを与える' },
   iron_wave: { id: 'iron_wave', name: 'アイアンウェーブ', cost: 2, type: 'attack', damage: 6, block: 8, star: 3, desc: '6ダメージを与え、8ブロックを得る' },
   double_strike: { id: 'double_strike', name: 'ダブルストライク', cost: 1, type: 'attack', damage: 3, hits: 2, star: 3, desc: '3ダメージを2回与える' },
-  shield_bash: { id: 'shield_bash', name: 'シールドバッシュ', cost: 1, type: 'skill', block: 6, star: 1, desc: '6ブロックを得る' },
+  shield_bash: { id: 'shield_bash', name: 'シールドバッシュ', cost: 1, type: 'attack', damage: 3, block: 4, star: 1, desc: '3ダメージを与え、4ブロックを得る' },
   quick_slash: { id: 'quick_slash', name: 'クイックスラッシュ', cost: 0, type: 'attack', damage: 3, star: 3, desc: '3ダメージを与える' },
   flame_slash: { id: 'flame_slash', name: 'フレイムスラッシュ', cost: 1, type: 'attack', damage: 6, star: 3, desc: '6ダメージを与える' },
   guard_up: { id: 'guard_up', name: 'ガードアップ', cost: 2, type: 'skill', block: 14, star: 2, desc: '14ブロックを得る' },
