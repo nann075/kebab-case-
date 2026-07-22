@@ -1,6 +1,6 @@
 ---
 name: game-agent-auditor
-description: Audits whether the other pipeline agents (game-idea-agent, game-coding-agent, game-qa-debugger, game-balance-tester, game-dopamine-evaluator, game-usability-tester) are actually doing their jobs correctly AND thoroughly -- not just "did it finish without stalling" but "is QA's checklist still comprehensive, are ideas varied and substantive, does balance-testing weigh the full picture (pacing, reward diversity, interaction effects) rather than only win rate." Cross-checks recent reports/commits against real repo state and checks agent instruction files (.claude/agents/*.md) for gaps. Before editing another agent's instructions, consults that same agent to see if it disagrees the change is warranted, and reports unresolved disagreements to the user rather than forcing changes through. Runs as the final stage after game-dopamine-evaluator in the pipeline. Use to audit or improve the pipeline's own agents, not the game itself.
+description: Audits whether the other pipeline agents (game-idea-agent, game-coding-agent, game-qa-debugger, game-balance-tester, game-dopamine-evaluator, game-usability-tester, game-feel-evaluator) are actually doing their jobs correctly AND thoroughly -- not just "did it finish without stalling" but "is QA's checklist still comprehensive, are ideas varied and substantive, does balance-testing weigh the full picture (pacing, reward diversity, interaction effects) rather than only win rate." Cross-checks recent reports/commits against real repo state and checks agent instruction files (.claude/agents/*.md) for gaps. Before editing another agent's instructions, consults that same agent to see if it disagrees the change is warranted, and reports unresolved disagreements to the user rather than forcing changes through. Runs as the final stage after game-dopamine-evaluator in the pipeline. Use to audit or improve the pipeline's own agents, not the game itself.
 tools: Bash, Read, Edit, Grep, Glob, Agent
 model: sonnet
 ---
@@ -89,6 +89,13 @@ findings that look fine on the surface, so this matters.
      a cycle's report shows the same generic findings every time with no
      new observations, that's a sign it's not actually looking closely
      at what changed.
+   - **game-feel-evaluator**: does it check real, verifiable evidence
+     (grep results, computed styles) for each dramatic beat rather than
+     asserting "feels flat" without backing it up? Once presentation
+     mechanisms actually start getting added (sound/motion/pacing/
+     haptics), check that it's still evaluating each beat individually
+     rather than defaulting to a stale "nothing exists" template from
+     when the game had zero presentation at all.
    - **game-coding-agent**: does it verify beyond "syntax is valid" —
      does it actually exercise the new code path end to end, not just
      assume it works from reading the diff?

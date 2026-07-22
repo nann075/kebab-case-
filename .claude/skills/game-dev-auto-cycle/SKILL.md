@@ -1,6 +1,6 @@
 ---
 name: game-dev-auto-cycle
-description: Runs one full cycle of the idea -> code -> test -> evaluate -> dopamine -> usability -> audit pipeline fully autonomously, with no approval gate -- game-idea-agent proposes, game-coding-agent implements it immediately, game-qa-debugger checks for bugs, game-balance-tester checks balance, game-dopamine-evaluator checks tension/excitement, game-usability-tester checks ease-of-use and visual design (every cycle, including image-based screenshot review), game-agent-auditor checks whether the pipeline's own agents are working correctly. Use for the recurring/scheduled game-improvement loop where the user does not want to approve each idea first.
+description: Runs one full cycle of the idea -> code -> test -> evaluate -> dopamine -> usability -> feel -> audit pipeline fully autonomously, with no approval gate -- game-idea-agent proposes, game-coding-agent implements it immediately, game-qa-debugger checks for bugs, game-balance-tester checks balance, game-dopamine-evaluator checks tension/excitement, game-usability-tester checks ease-of-use and visual design (every cycle, including image-based screenshot review), game-feel-evaluator checks presentation/juice (sound, pacing, motion, haptics at dramatic beats), game-agent-auditor checks whether the pipeline's own agents are working correctly. Use for the recurring/scheduled game-improvement loop where the user does not want to approve each idea first.
 ---
 
 Run one complete, unattended cycle of the game-improvement pipeline for
@@ -37,16 +37,25 @@ way the overnight balance/QA loop worked.
    card text, new log lines, a new overlay). It should actively surface
    concrete opportunities to improve the UI, not just flag things that
    are broken.
-7. **Audit**: launch `game-agent-auditor` to check whether the agents
+7. **Feel**: launch `game-feel-evaluator` every cycle to check whether
+   the game's dramatic beats (big hits, near-lethal moments, boss
+   telegraph reveals, floor clear, game over) get any sensory
+   reinforcement — sound, deliberate pacing/delay, motion/screen shake,
+   haptic feedback — or resolve as silent instant text/number updates.
+   This is separate from `game-dopamine-evaluator` (mechanical risk) and
+   `game-usability-tester` (comfort/legibility): a mechanically tense,
+   perfectly usable moment can still feel flat with zero presentation
+   behind it.
+8. **Audit**: launch `game-agent-auditor` to check whether the agents
    that just ran this cycle actually did their jobs correctly (not
-   whether the game is good — that's stages 3-6). It cross-checks
+   whether the game is good — that's stages 3-7). It cross-checks
    commits/reports against real repo state and will edit an agent's own
    `.claude/agents/*.md` instructions if it finds a systemic gap.
-8. **Report**: a concise summary of the cycle — idea implemented, what
-   each stage found/changed (including usability's findings/suggestions),
-   final commit hashes, and anything the auditor flagged or fixed about
-   the pipeline itself. This is what the user will read later; make it
-   scannable, not a transcript.
+9. **Report**: a concise summary of the cycle — idea implemented, what
+   each stage found/changed (including usability's and feel's
+   findings/suggestions), final commit hashes, and anything the auditor
+   flagged or fixed about the pipeline itself. This is what the user will
+   read later; make it scannable, not a transcript.
 
 Run stages strictly sequentially — each depends on the previous stage's
 code/commit state, never run them in parallel. If any stage hits
