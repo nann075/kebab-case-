@@ -63,15 +63,23 @@ function playHitSound(lethal) {
 
 // 勝利/死亡時の締めのサウンド: 勝利は上昇する矩形波トリプルビープ、
 // 死亡は下降するのこぎり波トリプルビープ (既存の致命ヒット音の波形を流用)。
+let endGameStingTimers = [];
+function clearEndGameSting() {
+  // 直前のゲーム終了で予約されたビープが、新しいゲームの開始/終了後に
+  // 鳴ってしまわないよう、保留中のタイマーを破棄する。
+  endGameStingTimers.forEach((id) => clearTimeout(id));
+  endGameStingTimers = [];
+}
 function playEndGameSting(won) {
+  clearEndGameSting();
   if (won) {
     playBeep(440, 0.12, 'square');
-    setTimeout(() => playBeep(587, 0.12, 'square'), 140);
-    setTimeout(() => playBeep(880, 0.25, 'square'), 280);
+    endGameStingTimers.push(setTimeout(() => playBeep(587, 0.12, 'square'), 140));
+    endGameStingTimers.push(setTimeout(() => playBeep(880, 0.25, 'square'), 280));
   } else {
     playBeep(220, 0.18, 'sawtooth');
-    setTimeout(() => playBeep(160, 0.18, 'sawtooth'), 160);
-    setTimeout(() => playBeep(100, 0.35, 'sawtooth'), 320);
+    endGameStingTimers.push(setTimeout(() => playBeep(160, 0.18, 'sawtooth'), 160));
+    endGameStingTimers.push(setTimeout(() => playBeep(100, 0.35, 'sawtooth'), 320));
   }
 }
 
@@ -251,6 +259,7 @@ function newGame(difficultyKey) {
   state.killCount = 0;
   state.gameOver = false;
   state.messages = [];
+  clearEndGameSting();
   const overlay = document.getElementById('overlay');
   overlay.style.display = 'none';
   overlay.classList.remove('show');
@@ -262,6 +271,7 @@ function newGame(difficultyKey) {
 }
 
 function backToMenu() {
+  clearEndGameSting();
   const overlay = document.getElementById('overlay');
   overlay.style.display = 'none';
   overlay.classList.remove('show');
