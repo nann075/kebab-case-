@@ -20,7 +20,14 @@ not more.
    (dark theme, `.card` component reuse, mobile-first sizing — the
    battle screen was recently tuned to fit one mobile viewport without
    scrolling; don't reintroduce scroll unless the idea requires it and
-   that trade-off was part of what was approved).
+   that trade-off was part of what was approved). If the idea involves a
+   new `setTimeout`-scheduled effect (a CSS-class pulse, a staggered-audio
+   sequence, a cleanup delay), use the existing `scheduleTimer(key, fn,
+   delay)`/`clearTimersByPrefix(prefix)` helpers near the top of
+   `game.js` rather than hand-rolling a new tracked variable — this bug
+   class (an untracked timer, or a tracked one never wired into
+   `newGame()`/`backToMenu()`'s reset) recurred four times before those
+   helpers existed specifically to remove the decision point.
 2. Implement the idea. Stay in scope — if you discover the idea is
    ambiguous or bigger than described once you're in the code, implement
    the most reasonable minimal-scope interpretation and say so in your

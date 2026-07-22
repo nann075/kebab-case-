@@ -23,6 +23,29 @@ function pickRandomUnique(pool, n) {
   return result;
 }
 
+// ---- タイマー管理ユーティリティ ----
+// setTimeoutで予約したCSSクラスの片付けや連続ビープの2音目を、キーごとに
+// 「同じ目的の予約は最新のものだけが有効」になるよう管理する共通ヘルパー。
+// この手のタイマーを機能ごとに個別実装すると、内側のタイマーだけ追跡を
+// 忘れる/newGame・backToMenuのリセットに配線し忘れる、といった同種のバグが
+// 繰り返し起きたため、一元化した。
+const namedTimers = {};
+function scheduleTimer(key, fn, delay) {
+  if (namedTimers[key]) clearTimeout(namedTimers[key]);
+  namedTimers[key] = setTimeout(() => {
+    namedTimers[key] = null;
+    fn();
+  }, delay);
+}
+function clearTimersByPrefix(prefix) {
+  Object.keys(namedTimers).forEach((key) => {
+    if (key === prefix || key.startsWith(prefix + ':')) {
+      if (namedTimers[key]) clearTimeout(namedTimers[key]);
+      namedTimers[key] = null;
+    }
+  });
+}
+
 // ---- ヒット演出 (画面フラッシュ/シェイク + 効果音) ----
 let audioCtx = null;
 function getAudioCtx() {
@@ -63,12 +86,10 @@ function playHitSound(lethal) {
 
 // 勝利/死亡時の締めのサウンド: 勝利は上昇する矩形波トリプルビープ、
 // 死亡は下降するのこぎり波トリプルビープ (既存の致命ヒット音の波形を流用)。
-let endGameStingTimers = [];
 function clearEndGameSting() {
   // 直前のゲーム終了で予約されたビープが、新しいゲームの開始/終了後に
   // 鳴ってしまわないよう、保留中のタイマーを破棄する。
-  endGameStingTimers.forEach((id) => clearTimeout(id));
-  endGameStingTimers = [];
+  clearTimersByPrefix('endGameSting');
 }
 function playEndGameSting(won) {
   clearEndGameSting();
@@ -76,32 +97,23 @@ function playEndGameSting(won) {
   // 致命打の効果音(0.35秒かけて減衰するのこぎり波)が鳴り終わってから締めの音が
   // 始まるよう、最初のビープも含めて全体を遅らせる。同時に鳴らすと濁ってしまう。
   const startDelay = 220;
-  if (won) {
-    endGameStingTimers.push(setTimeout(() => playBeep(440, 0.12, 'square'), startDelay));
-    endGameStingTimers.push(setTimeout(() => playBeep(587, 0.12, 'square'), startDelay + 140));
-    endGameStingTimers.push(setTimeout(() => playBeep(880, 0.25, 'square'), startDelay + 280));
-  } else {
-    endGameStingTimers.push(setTimeout(() => playBeep(220, 0.18, 'sawtooth'), startDelay));
-    endGameStingTimers.push(setTimeout(() => playBeep(160, 0.18, 'sawtooth'), startDelay + 160));
-    endGameStingTimers.push(setTimeout(() => playBeep(100, 0.35, 'sawtooth'), startDelay + 320));
-  }
+  const tones = won
+    ? [[440, 0.12, 'square'], [587, 0.12, 'square'], [880, 0.25, 'square']]
+    : [[220, 0.18, 'sawtooth'], [160, 0.18, 'sawtooth'], [100, 0.35, 'sawtooth']];
+  const gaps = [0, won ? 140 : 160, won ? 280 : 320];
+  tones.forEach(([freq, dur, type], i) => {
+    scheduleTimer(`endGameSting:${i}`, () => playBeep(freq, dur, type), startDelay + gaps[i]);
+  });
 }
 
-const hitFlashTimers = {};
 function flashHit(elementId, lethal) {
   const el = document.getElementById(elementId);
   if (!el) return;
-  // 直前のヒットの片付けタイマーが今回のフラッシュを早期に消してしまわないよう、
-  // 要素ごとに最新のタイマーだけを有効にする。
-  if (hitFlashTimers[elementId]) clearTimeout(hitFlashTimers[elementId]);
   el.classList.remove('hitFlash');
   // 強制リフロー: アニメーションを連続ヒット時にも再トリガーできるようにする
   void el.offsetWidth;
   el.classList.add('hitFlash');
-  hitFlashTimers[elementId] = setTimeout(() => {
-    el.classList.remove('hitFlash');
-    hitFlashTimers[elementId] = null;
-  }, 300);
+  scheduleTimer(`hitFlash:${elementId}`, () => el.classList.remove('hitFlash'), 300);
   playHitSound(lethal);
 }
 
@@ -109,54 +121,29 @@ function flashHit(elementId, lethal) {
 // ダメージ演出(hitFlash/playHitSound)とは異なる、「通知」として読める
 // サイン波の二音ビープ + 控えめな色フラッシュ。攻撃/溜め/防御の種別は
 // 問わず共通の合図とする(種別ごとの音色分けは将来の拡張課題)。
-let intentAlertTimer = null;
-let intentAlertSoundStartTimer = null;
-let intentAlertSoundTimer = null;
 function clearIntentAlert() {
   // newGame/backToMenuでのリセット時に、保留中の予告ビープ/パルスが
   // メニューやタイトル画面に戻った後で鳴ってしまわないよう破棄する
   // (clearEndGameStingと同じ方針)。
-  if (intentAlertTimer) clearTimeout(intentAlertTimer);
-  if (intentAlertSoundStartTimer) clearTimeout(intentAlertSoundStartTimer);
-  if (intentAlertSoundTimer) clearTimeout(intentAlertSoundTimer);
-  intentAlertTimer = null;
-  intentAlertSoundStartTimer = null;
-  intentAlertSoundTimer = null;
+  clearTimersByPrefix('intentAlert');
   const el = document.getElementById('battleEnemyIntent');
   if (el) el.classList.remove('intentAlert');
 }
 function playIntentAlertSound() {
-  // 2音目のタイマーも追跡し、連続予告時に前回の音色を打ち切ってから
-  // 今回の2音目だけを鳴らす(flashHit/playEndGameStingと同じ方針)。
-  if (intentAlertSoundTimer) clearTimeout(intentAlertSoundTimer);
   playBeep(330, 0.08, 'sine');
-  intentAlertSoundTimer = setTimeout(() => {
-    playBeep(494, 0.12, 'sine');
-    intentAlertSoundTimer = null;
-  }, 90);
+  scheduleTimer('intentAlert:sound2', () => playBeep(494, 0.12, 'sine'), 90);
 }
 function announceIntent() {
   const el = document.getElementById('battleEnemyIntent');
   if (!el) return;
-  // 連続するボスのターンで前回の片付けタイマーが今回のアニメーションを
-  // 早期に打ち切らないよう、専用のタイマーIDだけを有効にする。
-  if (intentAlertTimer) clearTimeout(intentAlertTimer);
   el.classList.remove('intentAlert');
   // 強制リフロー: アニメーションを連続予告時にも再トリガーできるようにする
   void el.offsetWidth;
   el.classList.add('intentAlert');
-  intentAlertTimer = setTimeout(() => {
-    el.classList.remove('intentAlert');
-    intentAlertTimer = null;
-  }, 400);
+  scheduleTimer('intentAlert:pulse', () => el.classList.remove('intentAlert'), 400);
   // ボスの攻撃ターンではflashHitのヒット音(0.1秒)が同じ瞬間に鳴るため、
   // それが鳴り終わってから予告音を鳴らして音が濁らないようにする。
-  // この開始遅延自体も、連続予告時に前回の分が今回の音をつぶさないよう追跡する。
-  if (intentAlertSoundStartTimer) clearTimeout(intentAlertSoundStartTimer);
-  intentAlertSoundStartTimer = setTimeout(() => {
-    intentAlertSoundStartTimer = null;
-    playIntentAlertSound();
-  }, 120);
+  scheduleTimer('intentAlert:soundStart', () => playIntentAlertSound(), 120);
 }
 
 // ---- 難易度定義 ----
