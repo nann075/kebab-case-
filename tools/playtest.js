@@ -80,9 +80,12 @@ async function playOneRun(page, difficulty) {
 
     if (snap.mode === 'buff') {
       await page.evaluate(() => {
-        // Heal if badly hurt, otherwise thin the deck; maxHP boost as fallback.
+        // Heal if badly hurt, otherwise favor permanent power-ups (might/ward)
+        // over one-off maxHP/deck-thin picks.
         const hpRatio = state.player.hp / state.player.maxHp;
-        const priority = hpRatio < 0.5 ? ['renewal', 'vigor', 'cleanse'] : ['cleanse', 'vigor', 'renewal'];
+        const priority = hpRatio < 0.5
+          ? ['renewal', 'vigor', 'might', 'ward', 'cleanse']
+          : ['might', 'ward', 'cleanse', 'vigor', 'renewal'];
         const cards = Array.from(document.querySelectorAll('#buffCards .card'));
         if (cards.length === 0) return;
         let best = cards[0], bestRank = Infinity;

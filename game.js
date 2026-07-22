@@ -291,10 +291,9 @@ const BUFF_FLOOR_INTERVAL = 10;
 // すべて「その場限り」の一回性のものに限定する。
 const BUFF_LIBRARY = {
   vigor: {
-    id: 'vigor', name: '活力の心得', desc: '最大HP+16、HPを最大まで全回復',
+    id: 'vigor', name: '活力の心得', desc: '最大HP+16',
     apply: () => {
       state.player.maxHp += 16;
-      state.player.hp = state.player.maxHp;
     },
   },
   renewal: {
@@ -312,14 +311,27 @@ const BUFF_LIBRARY = {
       let worstIdx = 0, worstScore = Infinity;
       deck.forEach((cardId, i) => {
         const c = CARD_LIBRARY[cardId];
-        const score = (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * 1.5 - c.cost;
+        const raw = (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * 1.5;
+        const score = raw / Math.max(c.cost, 0.5);
         if (score < worstScore) { worstScore = score; worstIdx = i; }
       });
       deck.splice(worstIdx, 1);
     },
   },
+  might: {
+    id: 'might', name: '剛力の心得', desc: '攻撃カードのダメージが永続的に+1される',
+    apply: () => {
+      state.player.strength = (state.player.strength || 0) + 1;
+    },
+  },
+  ward: {
+    id: 'ward', name: '守りの心得', desc: '毎戦闘開始時に永続的に3ブロックを得た状態で始まる',
+    apply: () => {
+      state.player.startingBlock = (state.player.startingBlock || 0) + 3;
+    },
+  },
 };
-const BUFF_POOL = ['vigor', 'renewal', 'cleanse'];
+const BUFF_POOL = ['vigor', 'renewal', 'cleanse', 'might', 'ward'];
 
 // ---- ゲーム状態 ----
 const state = {
@@ -330,6 +342,8 @@ const state = {
     hp: 20, maxHp: 20,
     level: 1,
     deck: [],
+    strength: 0,
+    startingBlock: 0,
   },
   enemy: null,
   battle: null,
@@ -364,6 +378,8 @@ function newGame(difficultyKey) {
   state.player.maxHp = diff.playerMaxHp;
   state.player.level = 1;
   state.player.deck = [...STARTER_DECK];
+  state.player.strength = 0;
+  state.player.startingBlock = 0;
   state.killCount = 0;
   state.gameOver = false;
   state.messages = [];
@@ -419,6 +435,7 @@ function startBattle() {
     energy: 3,
     maxEnergy: 3,
     block: 0,
+    firstTurn: true,
   };
   log(`${state.enemy.name}が現れた！`);
   startPlayerTurn();
@@ -426,7 +443,9 @@ function startBattle() {
 
 function startPlayerTurn() {
   const b = state.battle;
-  b.block = 0;
+  // 「守りの心得」の恒久ブロックは戦闘開始時(最初のターンのみ)に付与する。
+  b.block = b.firstTurn ? (state.player.startingBlock || 0) : 0;
+  b.firstTurn = false;
   b.energy = b.maxEnergy;
   drawCards(5);
   renderBattle();
@@ -459,7 +478,7 @@ function playCard(index) {
 
   if (card.damage) {
     const hits = card.hits || 1;
-    let dmg = card.damage * hits;
+    let dmg = card.damage * hits + (state.player.strength || 0);
     if (state.enemy.isBoss && state.enemy.actionType === 'guard') {
       dmg = Math.max(0, Math.round(dmg * 0.35));
     }

@@ -79,7 +79,9 @@ async function playOneRun(page, difficulty, aware) {
     if (snap.mode === 'buff') {
       await page.evaluate(() => {
         const hpRatio = state.player.hp / state.player.maxHp;
-        const priority = hpRatio < 0.5 ? ['renewal', 'vigor', 'cleanse'] : ['cleanse', 'vigor', 'renewal'];
+        const priority = hpRatio < 0.5
+          ? ['renewal', 'vigor', 'might', 'ward', 'cleanse']
+          : ['might', 'ward', 'cleanse', 'vigor', 'renewal'];
         const cards = Array.from(document.querySelectorAll('#buffCards .card'));
         if (cards.length === 0) return;
         let best = cards[0], bestRank = Infinity;
