@@ -308,19 +308,10 @@ const BUFF_LIBRARY = {
       state.player.hp = Math.min(state.player.maxHp, state.player.hp + amt);
     },
   },
-  cleanse: {
-    id: 'cleanse', name: '浄化の心得', desc: 'デッキから最も弱いカードを1枚取り除く',
+  insight: {
+    id: 'insight', name: '見切りの心得', desc: 'ターン開始時のドロー枚数+1(永続)',
     apply: () => {
-      const deck = state.player.deck;
-      if (deck.length === 0) return;
-      let worstIdx = 0, worstScore = Infinity;
-      deck.forEach((cardId, i) => {
-        const c = CARD_LIBRARY[cardId];
-        const raw = (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * 1.5;
-        const score = raw / Math.max(c.cost, 0.5);
-        if (score < worstScore) { worstScore = score; worstIdx = i; }
-      });
-      deck.splice(worstIdx, 1);
+      state.player.bonusDraw = (state.player.bonusDraw || 0) + 1;
     },
   },
   might: {
@@ -336,7 +327,7 @@ const BUFF_LIBRARY = {
     },
   },
 };
-const BUFF_POOL = ['vigor', 'renewal', 'cleanse', 'might', 'ward'];
+const BUFF_POOL = ['vigor', 'renewal', 'insight', 'might', 'ward'];
 
 // ---- ゲーム状態 ----
 const state = {
@@ -349,6 +340,7 @@ const state = {
     deck: [],
     strength: 0,
     startingBlock: 0,
+    bonusDraw: 0,
   },
   enemy: null,
   battle: null,
@@ -385,11 +377,13 @@ function newGame(difficultyKey) {
   state.player.deck = [...STARTER_DECK];
   state.player.strength = 0;
   state.player.startingBlock = 0;
+  state.player.bonusDraw = 0;
   state.killCount = 0;
   state.gameOver = false;
   state.messages = [];
   clearEndGameSting();
   clearIntentAlert();
+  clearTimersByPrefix('hitSeq');
   const overlay = document.getElementById('overlay');
   overlay.style.display = 'none';
   overlay.classList.remove('show');
@@ -404,6 +398,7 @@ function newGame(difficultyKey) {
 function backToMenu() {
   clearEndGameSting();
   clearIntentAlert();
+  clearTimersByPrefix('hitSeq');
   const overlay = document.getElementById('overlay');
   overlay.style.display = 'none';
   overlay.classList.remove('show');
@@ -453,7 +448,7 @@ function startPlayerTurn() {
   b.block = b.firstTurn ? (state.player.startingBlock || 0) : 0;
   b.firstTurn = false;
   b.energy = b.maxEnergy;
-  drawCards(5);
+  drawCards(5 + (state.player.bonusDraw || 0));
   renderBattle();
 }
 
@@ -488,9 +483,28 @@ function playCard(index) {
     if (state.enemy.isBoss && state.enemy.actionType === 'guard') {
       dmg = Math.max(0, Math.round(dmg * 0.35));
     }
+    // HP減算・勝敗判定はここで即座に(同期的に)確定させる。連続ヒットの
+    // 「見た目」だけをscheduleTimerで少しずつずらして表現する。もし勝敗判定
+    // 自体を演出タイマー側に持たせてしまうと、その反映が終わるより前に
+    // (ヘッドレスプレイテストのbotのような)同期的な連続操作が「まだ敵は
+    // 倒れていない」ものとして処理を続けてしまい、winBattle()の多重呼び出し
+    // や次の敵への誤爆につながる。そのためロジックは必ず同期のまま、
+    // flashHitの発火タイミングだけを後ろにずらす。
     state.enemy.hp -= dmg;
-    log(`${card.name}で${state.enemy.name}に${dmg}ダメージ！`);
-    flashHit('battleEnemy', state.enemy.hp <= 0);
+    const lethal = state.enemy.hp <= 0;
+    if (hits >= 2) {
+      log(`${card.name}で${state.enemy.name}に${dmg}ダメージ！(${hits}連撃)`);
+      clearTimersByPrefix('hitSeq');
+      for (let h = 0; h < hits; h++) {
+        const isLast = h === hits - 1;
+        scheduleTimer(`hitSeq:${h}`, () => {
+          flashHit('battleEnemy', isLast && lethal);
+        }, h * 120);
+      }
+    } else {
+      log(`${card.name}で${state.enemy.name}に${dmg}ダメージ！`);
+      flashHit('battleEnemy', lethal);
+    }
   }
   if (card.block) {
     b.block += card.block;

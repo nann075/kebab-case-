@@ -84,8 +84,8 @@ async function playOneRun(page, difficulty) {
         // over one-off maxHP/deck-thin picks.
         const hpRatio = state.player.hp / state.player.maxHp;
         const priority = hpRatio < 0.5
-          ? ['renewal', 'vigor', 'might', 'ward', 'cleanse']
-          : ['might', 'ward', 'cleanse', 'vigor', 'renewal'];
+          ? ['renewal', 'insight', 'vigor', 'might', 'ward']
+          : ['might', 'insight', 'ward', 'vigor', 'renewal'];
         const cards = Array.from(document.querySelectorAll('#buffCards .card'));
         if (cards.length === 0) return;
         let best = cards[0], bestRank = Infinity;
