@@ -69,7 +69,12 @@ async function playOneRun(page, difficulty) {
 
     if (snap.mode === 'reward') {
       const info = await page.evaluate(() => {
-        function scoreCard(c) { return (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * 1.5 - c.cost; }
+        // コスト効率で採点。旧式はコストを1回引くだけで、コストに比例
+        // しない値の大きさそのものを過大評価するバイアスがあった。
+        function scoreCard(c) {
+          const raw = (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * 1.5;
+          return raw / Math.max(c.cost, 0.5);
+        }
         const cards = Array.from(document.querySelectorAll('#rewardCards .card'));
         const offeredScores = cards.map((el) => scoreCard(CARD_LIBRARY[el.dataset.cardId]));
         const deckScores = state.player.deck.map((id) => scoreCard(CARD_LIBRARY[id]));
@@ -87,7 +92,12 @@ async function playOneRun(page, difficulty) {
       // Baseline bot: always adds the best-scoring of the 3 offered cards,
       // never uses the remove option (matches playtest.js's existing bot).
       await page.evaluate(() => {
-        function scoreCard(c) { return (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * 1.5 - c.cost; }
+        // コスト効率で採点。旧式はコストを1回引くだけで、コストに比例
+        // しない値の大きさそのものを過大評価するバイアスがあった。
+        function scoreCard(c) {
+          const raw = (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * 1.5;
+          return raw / Math.max(c.cost, 0.5);
+        }
         const cards = Array.from(document.querySelectorAll('#rewardCards .card'));
         let best = cards[0], bestScore = -Infinity;
         for (const el of cards) {
@@ -120,7 +130,8 @@ async function playOneRun(page, difficulty) {
     // margin once the enemy attack resolves.
     await page.evaluate(() => {
       function scoreCard(c, wantBlock) {
-        return (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * (wantBlock ? 3 : 1) - c.cost * 0.5;
+        const raw = (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * (wantBlock ? 3 : 1);
+        return raw / Math.max(c.cost, 0.5);
       }
       let guard = 0;
       while (guard++ < 20) {

@@ -59,7 +59,14 @@ async function playOneRun(page, difficulty) {
         let best = cards[0], bestScore = -Infinity;
         for (const el of cards) {
           const c = CARD_LIBRARY[el.dataset.cardId];
-          const score = (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * 1.5 - c.cost;
+          // コスト効率(コスト当たりの価値)で採点する。旧式はコストを1回
+          // 引くだけだったため、コストに比例しない値の大きさそのものを
+          // 過大評価するバイアスがあった(例: バッシュ12dmg/コスト2が、
+          // 同じ1エネルギーあたり効率のストライク6dmg/コスト1より2倍近く
+          // 高スコアになっていた)。コスト0のカードは無償の価値として
+          // 常に最優先する。
+          const raw = (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * 1.5;
+          const score = raw / Math.max(c.cost, 0.5);
           if (score > bestScore) { bestScore = score; best = el; }
         }
         const offered = cards.map((el) => el.dataset.cardId);
@@ -91,7 +98,9 @@ async function playOneRun(page, difficulty) {
     // Battle turn: greedily play cards, then end turn.
     await page.evaluate(() => {
       function scoreCard(c, wantBlock) {
-        return (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * (wantBlock ? 3 : 1) - c.cost * 0.5;
+        // コスト効率で採点(reward-pick側と同じ修正、詳細はそちらのコメント参照)。
+        const raw = (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * (wantBlock ? 3 : 1);
+        return raw / Math.max(c.cost, 0.5);
       }
       let guard = 0;
       while (guard++ < 20) {

@@ -61,7 +61,10 @@ async function playOneRun(page, difficulty, aware) {
 
     if (snap.mode === 'reward') {
       await page.evaluate(() => {
-        function scoreCard(c) { return (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * 1.5 - c.cost; }
+        function scoreCard(c) {
+          const raw = (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * 1.5;
+          return raw / Math.max(c.cost, 0.5);
+        }
         const cards = Array.from(document.querySelectorAll('#rewardCards .card'));
         let best = cards[0], bestScore = -Infinity;
         for (const el of cards) {
@@ -100,7 +103,8 @@ async function playOneRun(page, difficulty, aware) {
         // Aware bot values damage cards normally even under guard (still
         // the best use of otherwise-wasted energy - nothing carries over
         // between turns), it just never chases block under guard.
-        return (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * (wantBlock ? 3 : (guardActive ? 0 : 1)) - c.cost * 0.5;
+        const raw = (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * (wantBlock ? 3 : (guardActive ? 0 : 1));
+        return raw / Math.max(c.cost, 0.5);
       }
       let guard = 0;
       while (guard++ < 20) {

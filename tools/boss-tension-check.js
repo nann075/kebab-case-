@@ -47,7 +47,10 @@ async function playOneRun(page, difficulty) {
 
     if (snap.mode === 'reward') {
       await page.evaluate(() => {
-        function scoreCard(c) { return (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * 1.5 - c.cost; }
+        function scoreCard(c) {
+          const raw = (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * 1.5;
+          return raw / Math.max(c.cost, 0.5);
+        }
         const cards = Array.from(document.querySelectorAll('#rewardCards .card'));
         let best = cards[0], bestScore = -Infinity;
         for (const el of cards) {
@@ -92,7 +95,8 @@ async function playOneRun(page, difficulty) {
     // not reference actionType/chargeBonus anywhere.
     await page.evaluate(() => {
       function scoreCard(c, wantBlock) {
-        return (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * (wantBlock ? 3 : 1) - c.cost * 0.5;
+        const raw = (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * (wantBlock ? 3 : 1);
+        return raw / Math.max(c.cost, 0.5);
       }
       let guard = 0;
       while (guard++ < 20) {
