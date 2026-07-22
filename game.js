@@ -72,6 +72,7 @@ function clearEndGameSting() {
 }
 function playEndGameSting(won) {
   clearEndGameSting();
+  clearIntentAlert();
   // 致命打の効果音(0.35秒かけて減衰するのこぎり波)が鳴り終わってから締めの音が
   // 始まるよう、最初のビープも含めて全体を遅らせる。同時に鳴らすと濁ってしまう。
   const startDelay = 220;
@@ -111,6 +112,19 @@ function flashHit(elementId, lethal) {
 let intentAlertTimer = null;
 let intentAlertSoundStartTimer = null;
 let intentAlertSoundTimer = null;
+function clearIntentAlert() {
+  // newGame/backToMenuでのリセット時に、保留中の予告ビープ/パルスが
+  // メニューやタイトル画面に戻った後で鳴ってしまわないよう破棄する
+  // (clearEndGameStingと同じ方針)。
+  if (intentAlertTimer) clearTimeout(intentAlertTimer);
+  if (intentAlertSoundStartTimer) clearTimeout(intentAlertSoundStartTimer);
+  if (intentAlertSoundTimer) clearTimeout(intentAlertSoundTimer);
+  intentAlertTimer = null;
+  intentAlertSoundStartTimer = null;
+  intentAlertSoundTimer = null;
+  const el = document.getElementById('battleEnemyIntent');
+  if (el) el.classList.remove('intentAlert');
+}
 function playIntentAlertSound() {
   // 2音目のタイマーも追跡し、連続予告時に前回の音色を打ち切ってから
   // 今回の2音目だけを鳴らす(flashHit/playEndGameStingと同じ方針)。
@@ -304,6 +318,7 @@ function newGame(difficultyKey) {
   state.gameOver = false;
   state.messages = [];
   clearEndGameSting();
+  clearIntentAlert();
   const overlay = document.getElementById('overlay');
   overlay.style.display = 'none';
   overlay.classList.remove('show');
@@ -316,6 +331,7 @@ function newGame(difficultyKey) {
 
 function backToMenu() {
   clearEndGameSting();
+  clearIntentAlert();
   const overlay = document.getElementById('overlay');
   overlay.style.display = 'none';
   overlay.classList.remove('show');
