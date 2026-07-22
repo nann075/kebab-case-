@@ -25,9 +25,9 @@ function pickRandomUnique(pool, n) {
 
 // ---- 難易度定義 ----
 const DIFFICULTIES = {
-  easy: { label: 'かんたん', playerMaxHp: 22, enemyHpMult: 0.9, enemyAtkMult: 0.95 },
-  normal: { label: 'ふつう', playerMaxHp: 20, enemyHpMult: 0.95, enemyAtkMult: 0.92 },
-  hard: { label: 'むずかしい', playerMaxHp: 17, enemyHpMult: 1.15, enemyAtkMult: 1.1 },
+  easy: { label: 'かんたん', playerMaxHp: 30, enemyHpMult: 0.9, enemyAtkMult: 0.9 },
+  normal: { label: 'ふつう', playerMaxHp: 26, enemyHpMult: 0.95, enemyAtkMult: 0.92 },
+  hard: { label: 'むずかしい', playerMaxHp: 25, enemyHpMult: 1.15, enemyAtkMult: 1.02 },
 };
 
 // ---- モンスター定義 ----
@@ -43,7 +43,7 @@ function spawnEnemyForFloor(floor) {
   const isBossFloor = floor % BUFF_FLOOR_INTERVAL === 0;
   const scale = Math.floor((floor - 1) * 0.3);
   let hp = Math.round((type.hpBase + scale) * diff.enemyHpMult);
-  let atk = Math.round((type.atkBase + Math.floor((floor - 1) / 8)) * diff.enemyAtkMult);
+  let atk = Math.round((type.atkBase + Math.floor((floor - 1) / 12)) * diff.enemyAtkMult);
   let name = type.name;
   if (isBossFloor) {
     hp = Math.round(hp * 1.25);
@@ -105,15 +105,18 @@ const BUFF_FLOOR_INTERVAL = 10;
 // すべて「その場限り」の一回性のものに限定する。
 const BUFF_LIBRARY = {
   vigor: {
-    id: 'vigor', name: '活力の心得', desc: '最大HP+10(回復付き)',
+    id: 'vigor', name: '活力の心得', desc: '最大HP+15、HPを最大まで全回復',
     apply: () => {
-      state.player.maxHp += 10;
-      state.player.hp = Math.min(state.player.maxHp, state.player.hp + 10);
+      state.player.maxHp += 15;
+      state.player.hp = state.player.maxHp;
     },
   },
   renewal: {
-    id: 'renewal', name: '再生の心得', desc: 'HPを20回復する',
-    apply: () => { state.player.hp = Math.min(state.player.maxHp, state.player.hp + 20); },
+    id: 'renewal', name: '再生の心得', desc: '最大HPの50%(端数切上)を回復する',
+    apply: () => {
+      const amt = Math.ceil(state.player.maxHp * 0.5);
+      state.player.hp = Math.min(state.player.maxHp, state.player.hp + amt);
+    },
   },
   cleanse: {
     id: 'cleanse', name: '浄化の心得', desc: 'デッキから最も弱いカードを1枚取り除く',
