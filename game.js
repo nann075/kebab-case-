@@ -163,9 +163,9 @@ function announceIntent(actionType) {
 
 // ---- 難易度定義 ----
 const DIFFICULTIES = {
-  easy: { label: 'かんたん', playerMaxHp: 36, enemyHpMult: 0.87, enemyAtkMult: 0.87 },
-  normal: { label: 'ふつう', playerMaxHp: 33, enemyHpMult: 0.915, enemyAtkMult: 0.885 },
-  hard: { label: 'むずかしい', playerMaxHp: 33, enemyHpMult: 1.0, enemyAtkMult: 0.91 },
+  easy: { label: 'かんたん', playerMaxHp: 36, enemyHpMult: 0.865, enemyAtkMult: 0.865 },
+  normal: { label: 'ふつう', playerMaxHp: 33, enemyHpMult: 0.95, enemyAtkMult: 0.93 },
+  hard: { label: 'むずかしい', playerMaxHp: 29, enemyHpMult: 1.16, enemyAtkMult: 1.12 },
 };
 
 // ---- モンスター定義 ----
