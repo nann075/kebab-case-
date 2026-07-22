@@ -223,7 +223,7 @@ const CARD_LIBRARY = {
   iron_wave: { id: 'iron_wave', name: 'アイアンウェーブ', cost: 2, type: 'attack', damage: 6, block: 8, star: 3, desc: '6ダメージを与え、8ブロックを得る' },
   double_strike: { id: 'double_strike', name: 'ダブルストライク', cost: 1, type: 'attack', damage: 3, hits: 2, star: 3, desc: '3ダメージを2回与える' },
   shield_bash: { id: 'shield_bash', name: 'シールドバッシュ', cost: 1, type: 'skill', block: 6, star: 1, desc: '6ブロックを得る' },
-  quick_slash: { id: 'quick_slash', name: 'クイックスラッシュ', cost: 1, type: 'attack', damage: 5, star: 2, desc: '5ダメージを与える' },
+  quick_slash: { id: 'quick_slash', name: 'クイックスラッシュ', cost: 0, type: 'attack', damage: 3, star: 3, desc: '3ダメージを与える' },
   flame_slash: { id: 'flame_slash', name: 'フレイムスラッシュ', cost: 1, type: 'attack', damage: 6, star: 3, desc: '6ダメージを与える' },
   guard_up: { id: 'guard_up', name: 'ガードアップ', cost: 2, type: 'skill', block: 14, star: 2, desc: '14ブロックを得る' },
   triple_jab: { id: 'triple_jab', name: 'トリプルジャブ', cost: 2, type: 'attack', damage: 3, hits: 3, star: 1, desc: '3ダメージを3回与える' },
@@ -391,7 +391,10 @@ function maybeLevelUp() {
   state.killCount++;
   if (state.killCount % 3 === 0) {
     state.player.level++;
-    state.player.maxHp += 11;
+    // 旧値+11は敵atkのmaxHp比を終盤4%未満まで薄め、easy/normalの勝率を
+    // 健全域(easy 5-16%/normal 0-2.5%)から大きく外していた。+7は
+    // 実測でその帯に収まる値(50-80走の複数バッチで確認済み)。
+    state.player.maxHp += 7;
     log(`レベルアップ！ Lv${state.player.level}になった`);
   }
 }
