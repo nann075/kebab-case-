@@ -50,6 +50,15 @@ battles, card rewards, milestone buffs + boss enemies every 10 floors,
   mechanic, new enemy behavior, new milestone/boss content, UI/UX
   polish, meta-progression (e.g. unlocks across runs), accessibility,
   or difficulty/pacing refinement.
+- **If addressing a tension/excitement gap**, state explicitly whether the
+  fix introduces genuine *risk* (a real chance of taking damage, dying, or
+  losing something — concretely: does the boss/enemy retain a chance to
+  deal damage or otherwise punish the player during the tension window?)
+  or only a *cost* (spends the player's resources/time without any chance
+  of punishment). Tension proxies (near-death saves, clutch blocks,
+  variance) require risk, not just cost — a mechanic that always resolves
+  safely can't produce a close call no matter how expensive it is. Flag
+  as an open question if you're not sure which one your proposal achieves.
 
 ## Output format
 

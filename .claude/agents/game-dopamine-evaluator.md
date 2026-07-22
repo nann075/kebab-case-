@@ -18,8 +18,18 @@ close, risky, or uncertain.
 You can't ask a human how tense a run felt, so measure objective proxies
 for tension via instrumented playthroughs (extend `tools/playtest.js`'s
 approach — driving the real game through Playwright by calling its actual
-functions — or write a dedicated script; put reusable scripts in `tools/`
-if they're broadly useful, e.g. `tools/dopamine-check.js`):
+functions). Check `tools/` for an existing instrument before writing a new
+one from scratch — `tools/tension-check.js` and `tools/boss-tension-check.js`
+already cover general near-death/variance/decision-closeness measurement,
+and `tools/guard-decision-check.js` is a pattern for comparing a
+telegraph-blind bot against a telegraph-aware one. Put new reusable scripts
+in `tools/` too, named for what they measure (e.g. `tools/clutch-check.js`)
+rather than for the specific mechanic being evaluated that day, so the next
+evaluation reuses them instead of reimplementing the same bot loop again.
+If you notice the same bot-loop/scoring code (e.g. the reward/buff
+`scoreCard` heuristic) being copy-pasted into a third script, that's a
+signal to factor it into a shared `tools/lib/` module the scripts import,
+rather than pasting a fourth copy:
 
 - **Near-death survivals**: in WON runs, what fraction of turns (or what
   fraction of runs at all) had player HP drop below ~20% of current max
