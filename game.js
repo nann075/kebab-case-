@@ -61,6 +61,20 @@ function playHitSound(lethal) {
   }
 }
 
+// 勝利/死亡時の締めのサウンド: 勝利は上昇する矩形波トリプルビープ、
+// 死亡は下降するのこぎり波トリプルビープ (既存の致命ヒット音の波形を流用)。
+function playEndGameSting(won) {
+  if (won) {
+    playBeep(440, 0.12, 'square');
+    setTimeout(() => playBeep(587, 0.12, 'square'), 140);
+    setTimeout(() => playBeep(880, 0.25, 'square'), 280);
+  } else {
+    playBeep(220, 0.18, 'sawtooth');
+    setTimeout(() => playBeep(160, 0.18, 'sawtooth'), 160);
+    setTimeout(() => playBeep(100, 0.35, 'sawtooth'), 320);
+  }
+}
+
 const hitFlashTimers = {};
 function flashHit(elementId, lethal) {
   const el = document.getElementById(elementId);
@@ -237,7 +251,9 @@ function newGame(difficultyKey) {
   state.killCount = 0;
   state.gameOver = false;
   state.messages = [];
-  document.getElementById('overlay').style.display = 'none';
+  const overlay = document.getElementById('overlay');
+  overlay.style.display = 'none';
+  overlay.classList.remove('show');
   document.getElementById('rewardOverlay').style.display = 'none';
   document.getElementById('buffOverlay').style.display = 'none';
   document.getElementById('menuOverlay').style.display = 'none';
@@ -246,7 +262,9 @@ function newGame(difficultyKey) {
 }
 
 function backToMenu() {
-  document.getElementById('overlay').style.display = 'none';
+  const overlay = document.getElementById('overlay');
+  overlay.style.display = 'none';
+  overlay.classList.remove('show');
   document.getElementById('app').style.display = 'none';
   document.getElementById('menuOverlay').style.display = 'flex';
 }
@@ -582,7 +600,13 @@ function endGame(won) {
   const overlay = document.getElementById('overlay');
   const text = document.getElementById('overlayText');
   text.textContent = won ? `${MAX_FLOOR}階制覇！ ゲームクリア！` : `ゲームオーバー (${state.floor}階で力尽きた)`;
+  // フェードイン演出を毎回再トリガーできるよう、クラスを外して強制リフローしてから付け直す。
+  // display/クラス変更は同期的なので、ボタンはアニメーション中も即座に押せる。
+  overlay.classList.remove('show');
   overlay.style.display = 'flex';
+  void overlay.offsetWidth;
+  overlay.classList.add('show');
+  playEndGameSting(won);
 }
 
 document.getElementById('restartBtn').addEventListener('click', () => newGame(state.difficulty));
