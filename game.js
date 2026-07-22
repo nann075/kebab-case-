@@ -60,12 +60,12 @@ function spawnEnemyForFloor(floor) {
   return enemy;
 }
 
-// ボスのみ、次ターンの行動を「攻撃60% / 溜め20% / 防御20%」の重みで抽選する。
+// ボスのみ、次ターンの行動を「攻撃50% / 溜め20% / 防御30%」の重みで抽選する。
 // 通常敵は常に'attack'のまま(挙動は今までと完全に同じ)。
 function rollBossAction(enemy) {
   const r = Math.random();
-  if (r < 0.6) enemy.actionType = 'attack';
-  else if (r < 0.8) enemy.actionType = 'charge';
+  if (r < 0.5) enemy.actionType = 'attack';
+  else if (r < 0.7) enemy.actionType = 'charge';
   else enemy.actionType = 'guard';
 }
 
@@ -263,7 +263,7 @@ function playCard(index) {
     const hits = card.hits || 1;
     let dmg = card.damage * hits;
     if (state.enemy.isBoss && state.enemy.actionType === 'guard') {
-      dmg = Math.max(0, Math.round(dmg * 0.5));
+      dmg = Math.max(0, Math.round(dmg * 0.35));
     }
     state.enemy.hp -= dmg;
     log(`${card.name}で${state.enemy.name}に${dmg}ダメージ！`);
@@ -306,7 +306,7 @@ function enemyBattleAttack() {
       enemy.chargeBonus = true;
       log(`${enemy.name}は力を溜めている...`);
     } else if (enemy.actionType === 'guard') {
-      log(`${enemy.name}は防御の構えを取った(与ダメージ半減)`);
+      log(`${enemy.name}は防御の構えを取った(与ダメージ65%減)`);
     } else {
       let atk = enemy.atk;
       if (enemy.chargeBonus) {
@@ -366,7 +366,7 @@ function buildCardElement(cardId) {
 function getEnemyIntentText(enemy) {
   if (enemy.isBoss) {
     if (enemy.actionType === 'charge') return '次のターン: 溜めている(次は2倍ダメージ)';
-    if (enemy.actionType === 'guard') return '次のターン: 防御態勢(与ダメージ半減)';
+    if (enemy.actionType === 'guard') return '次のターン: 防御態勢(与ダメージ65%減)';
     const atk = enemy.chargeBonus ? enemy.atk * 2 : enemy.atk;
     return `次の攻撃: ${atk}ダメージ`;
   }
