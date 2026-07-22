@@ -72,14 +72,17 @@ function clearEndGameSting() {
 }
 function playEndGameSting(won) {
   clearEndGameSting();
+  // 致命打の効果音(0.35秒かけて減衰するのこぎり波)が鳴り終わってから締めの音が
+  // 始まるよう、最初のビープも含めて全体を遅らせる。同時に鳴らすと濁ってしまう。
+  const startDelay = 220;
   if (won) {
-    playBeep(440, 0.12, 'square');
-    endGameStingTimers.push(setTimeout(() => playBeep(587, 0.12, 'square'), 140));
-    endGameStingTimers.push(setTimeout(() => playBeep(880, 0.25, 'square'), 280));
+    endGameStingTimers.push(setTimeout(() => playBeep(440, 0.12, 'square'), startDelay));
+    endGameStingTimers.push(setTimeout(() => playBeep(587, 0.12, 'square'), startDelay + 140));
+    endGameStingTimers.push(setTimeout(() => playBeep(880, 0.25, 'square'), startDelay + 280));
   } else {
-    playBeep(220, 0.18, 'sawtooth');
-    endGameStingTimers.push(setTimeout(() => playBeep(160, 0.18, 'sawtooth'), 160));
-    endGameStingTimers.push(setTimeout(() => playBeep(100, 0.35, 'sawtooth'), 320));
+    endGameStingTimers.push(setTimeout(() => playBeep(220, 0.18, 'sawtooth'), startDelay));
+    endGameStingTimers.push(setTimeout(() => playBeep(160, 0.18, 'sawtooth'), startDelay + 160));
+    endGameStingTimers.push(setTimeout(() => playBeep(100, 0.35, 'sawtooth'), startDelay + 320));
   }
 }
 
