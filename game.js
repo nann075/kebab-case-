@@ -82,7 +82,7 @@ const CARD_LIBRARY = {
   guard_up: { id: 'guard_up', name: 'ガードアップ', cost: 2, type: 'skill', block: 14, desc: '14ブロックを得る' },
   triple_jab: { id: 'triple_jab', name: 'トリプルジャブ', cost: 2, type: 'attack', damage: 3, hits: 3, desc: '3ダメージを3回与える' },
   brace: { id: 'brace', name: 'ブレイス', cost: 1, type: 'skill', block: 8, desc: '8ブロックを得る' },
-  finishing_blow: { id: 'finishing_blow', name: 'フィニッシングブロー', cost: 3, type: 'attack', damage: 10, desc: '10ダメージを与える(全エネルギーを消費)' },
+  finishing_blow: { id: 'finishing_blow', name: 'フィニッシングブロー', cost: 3, type: 'attack', damage: 10, desc: '10ダメージを与える' },
 };
 
 const STARTER_DECK = [
@@ -165,7 +165,6 @@ function renderStats() {
   const p = state.player;
   document.getElementById('stats').innerHTML =
     `難易度: <span>${DIFFICULTIES[state.difficulty].label}</span> / 階層: <span>${state.floor}</span><br>` +
-    `HP: <span>${Math.max(0, p.hp)} / ${p.maxHp}</span><br>` +
     `レベル: <span>${p.level}</span> / デッキ枚数: <span>${p.deck.length}</span>`;
 }
 
