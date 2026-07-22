@@ -72,6 +72,12 @@ Concrete, code-level and instrumented checks — don't estimate:
   change tied to a hit event (grep + the animation check above); note
   its absence explicitly since it's one of the cheapest high-impact
   additions for a hit-reactive card battler.
+- **Hit-flash specifically**: check for any `background`/`color`/filter
+  change tied to a hit event (e.g. `#battleEnemy` or `#battlePlayer`
+  briefly flashing red on taking damage — a standard, cheap hit-reaction
+  technique, same family as screen shake but color-based instead of
+  motion-based). Same grep/computed-style method as above; note its
+  absence explicitly alongside shake.
 
 ## Report
 
@@ -83,9 +89,11 @@ pipeline** — so favor additions that need no external files:
 - Sound: synthesized tones via the Web Audio API (`AudioContext` +
   `OscillatorNode`) rather than `<audio src>` files that would need to be
   sourced/committed as binary assets.
-- Motion: a CSS class toggled briefly via `classList.add` +
-  `setTimeout`/`animationend` (e.g. a shake keyframe on `#battleEnemy` or
-  `#battlePlayer` on a big hit) — no new dependencies.
+- Motion/color: a CSS class toggled briefly via `classList.add` +
+  `setTimeout`/`animationend` (e.g. a shake keyframe, or a red hit-flash
+  via a `filter`/`background` `@keyframes` on `#battleEnemy` or
+  `#battlePlayer` on a big hit) — no new dependencies, both are cheap
+  wins from the same technique.
 - Pacing: a short `await new Promise(r => setTimeout(r, ...))` before
   revealing a boss's rolled action or resolving a lethal hit, so the
   telegraph/kill actually gets a beat to register instead of appearing
