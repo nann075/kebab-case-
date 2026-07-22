@@ -23,14 +23,16 @@ battles, card rewards, milestone buffs + boss enemies every 10 floors,
    existing features or re-litigate settled decisions without new
    reasoning.
 3. Skim the last couple of `game-qa-debugger` / `game-balance-tester` /
-   `game-dopamine-evaluator` findings (recent commit messages usually
-   summarize them) for known gaps worth addressing — not just balance gaps
-   (e.g. "defend/shield_bash pick-rate stuck near 0%", "deck bloat by floor
-   90+") but tension/excitement gaps too (e.g. "boss telegraph didn't change
-   the bot's optimal play — block volume stayed flat regardless of intent").
-   A dopamine-evaluator finding that a mechanic doesn't create a real
-   decision is just as valid a thing to propose against as a balance
-   problem.
+   `game-dopamine-evaluator` / `game-usability-tester` findings (recent
+   commit messages usually summarize them) for known gaps worth
+   addressing — not just balance gaps (e.g. "defend/shield_bash pick-rate
+   stuck near 0%", "deck bloat by floor 90+") but tension/excitement gaps
+   (e.g. "boss telegraph didn't change the bot's optimal play — block
+   volume stayed flat regardless of intent") and usability gaps too (e.g.
+   "reward cards drop below the 40px touch-target guideline at mobile
+   width", "enemy intent text doesn't visually stand out from the log").
+   A dopamine-evaluator or usability-tester finding is just as valid a
+   thing to propose against as a balance problem.
 
 ## What makes a good proposal
 

@@ -82,12 +82,13 @@ findings that look fine on the surface, so this matters.
      tension (does the mechanic change optimal play) as well as outcome
      variance, or only the easier-to-measure outcome numbers?
    - **game-usability-tester**: does it back usability claims with real
-     measurements (px sizes, contrast ratios, tap counts) the way the
-     other evaluators do, or does it lapse into subjective "feels fine"
-     assertions? Also check whether `game-dev-auto-cycle` correctly
-     skipped or ran it for the cycle's idea — a UI-facing change that
-     didn't get a usability pass (or a pure numeric-tuning idea that
-     triggered one unnecessarily) is a pipeline-routing bug worth noting.
+     measurements (px sizes, contrast ratios, tap counts) *and* actual
+     visual inspection of screenshots, the way its instructions require,
+     or does it lapse into subjective "feels fine"/generic "looks nice"
+     assertions without concrete evidence? It runs every cycle now — if
+     a cycle's report shows the same generic findings every time with no
+     new observations, that's a sign it's not actually looking closely
+     at what changed.
    - **game-coding-agent**: does it verify beyond "syntax is valid" —
      does it actually exercise the new code path end to end, not just
      assume it works from reading the diff?
