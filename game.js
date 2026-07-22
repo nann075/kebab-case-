@@ -282,8 +282,10 @@ function pickWeightedRewardCards(pool, n) {
 // (カード除去 or カード複製)を挟む。毎回発生すると強すぎる/邪魔なため
 // 低確率にしている。
 const RANDOM_EVENT_CHANCE = 0.25;
-// ランダムイベント内での内訳: 除去75% / 複製25%。
-const EVENT_REMOVE_CHANCE = 0.75;
+// ランダムイベント内での内訳: 除去82% / 複製18%。
+// 複製は星3など高スコアのカードをそのまま増殖できてしまい、デッキの
+// 期待火力を底上げする効果が除去よりも強いため、除去よりだいぶ低い頻度にする。
+const EVENT_REMOVE_CHANCE = 0.82;
 
 const MAX_FLOOR = 100;
 const BUFF_FLOOR_INTERVAL = 10;
@@ -328,9 +330,9 @@ const BUFF_LIBRARY = {
     },
   },
   ward: {
-    id: 'ward', name: '守りの心得', desc: '毎戦闘開始時に永続的に3ブロックを得た状態で始まる',
+    id: 'ward', name: '守りの心得', desc: '毎戦闘開始時に永続的に2ブロックを得た状態で始まる',
     apply: () => {
-      state.player.startingBlock = (state.player.startingBlock || 0) + 3;
+      state.player.startingBlock = (state.player.startingBlock || 0) + 2;
     },
   },
 };
