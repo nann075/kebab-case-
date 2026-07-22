@@ -131,6 +131,10 @@
     gap: 14px;
     margin-bottom: 8px;
     font-size: 13px;
+    background: #1b1b1b;
+    border: 1px solid #444;
+    padding: 6px 8px;
+    box-sizing: border-box;
   }
   #battlePlayer span {
     color: #7fdbff;
@@ -222,7 +226,7 @@
   .card:active {
     transform: scale(0.96);
   }
-  #battleControls button, #skipRewardBtn, #removeCardBtn, #cancelRemoveBtn {
+  #battleControls button, #skipRewardBtn, #removeCardBtn, #cancelRemoveBtn, #skipBuffBtn {
     padding: 8px 22px;
     font-size: 14px;
     background: #2a2a2a;
@@ -248,6 +252,12 @@
     flex-direction: column;
     color: #fff;
     z-index: 60;
+  }
+  #overlayText {
+    padding: 0 20px;
+    max-width: 440px;
+    box-sizing: border-box;
+    text-align: center;
   }
   #overlayButtons {
     display: flex;
