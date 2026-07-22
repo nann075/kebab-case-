@@ -57,18 +57,19 @@ way the overnight balance/QA loop worked.
    flagged or fixed about the pipeline itself. This is what the user will
    read later; make it scannable, not a transcript.
 10. **Schedule the next cycle**: this loop runs back-to-back as each
-    cycle finishes, not on a fixed clock interval — the user explicitly
-    wants it to fire again as soon as there's nothing left to do, not
-    wait out an hourly cron. Use `create_trigger` to make a **one-shot**
+    cycle finishes, not on a fixed clock interval, and it runs
+    continuously/indefinitely (24/7/365) by explicit user request — there
+    is no daily stop time. Use `create_trigger` to make a **one-shot**
     trigger (self-bound to this session, `run_once_at` ~1 minute from
     now — the minimum practical delay) named exactly
     `"Game dev cycle continuation"` whose prompt re-invokes this skill
     (same content as this cycle's own invocation). If a trigger with
     that exact name is already enabled (shouldn't normally happen since
     each one is one-shot and disables itself after firing, but check via
-    `list_triggers` if unsure), don't create a duplicate. Skip this step
-    entirely if it's already past the daily stop time (see below) or a
-    stop instruction has otherwise been given this session.
+    `list_triggers` if unsure), don't create a duplicate. Always do this
+    step — the only reason to skip it is an explicit stop instruction
+    from the user given this session (see "Stopping the loop" below), or
+    a stage-9-blocking failure per the paragraph below.
 
 Run stages strictly sequentially — each depends on the previous stage's
 code/commit state, never run them in parallel. If any stage hits
@@ -81,14 +82,18 @@ the same blocker repeatedly.
 
 ## Stopping the loop
 
-Because each cycle schedules its own successor (step 10) instead of
-running on a fixed cron, stopping the loop means canceling whatever
+This loop is intended to run continuously, 24/7/365, by explicit user
+request — there is no scheduled stop. It only ever stops if the user
+explicitly says so in a live turn. If that happens: because each cycle
+schedules its own successor (step 10) instead of running on a fixed
+cron, stopping the loop means canceling whatever
 `"Game dev cycle continuation"` trigger is currently pending, not
 deleting a recurring cron trigger. Call `list_triggers`, find the
 enabled one named `"Game dev cycle continuation"` (there should be at
-most one at a time), and `delete_trigger` it. If none is found, either a
-cycle is mid-flight (it'll schedule its own successor when it finishes —
-delete that one instead) or the loop was already stopped.
+most one at a time), and `delete_trigger` it. If none is found, a cycle
+is likely mid-flight — tell the user it'll schedule one more successor
+when it finishes, and that one will need to be canceled too (or just
+tell them to say "stop" again once the in-flight cycle's report lands).
 
 This skill produces no approval checkpoint by design — do not pause to
 ask the user mid-cycle. That's the whole point of this skill versus
