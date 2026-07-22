@@ -61,14 +61,21 @@ function playHitSound(lethal) {
   }
 }
 
+const hitFlashTimers = {};
 function flashHit(elementId, lethal) {
   const el = document.getElementById(elementId);
   if (!el) return;
+  // 直前のヒットの片付けタイマーが今回のフラッシュを早期に消してしまわないよう、
+  // 要素ごとに最新のタイマーだけを有効にする。
+  if (hitFlashTimers[elementId]) clearTimeout(hitFlashTimers[elementId]);
   el.classList.remove('hitFlash');
   // 強制リフロー: アニメーションを連続ヒット時にも再トリガーできるようにする
   void el.offsetWidth;
   el.classList.add('hitFlash');
-  setTimeout(() => el.classList.remove('hitFlash'), 300);
+  hitFlashTimers[elementId] = setTimeout(() => {
+    el.classList.remove('hitFlash');
+    hitFlashTimers[elementId] = null;
+  }, 300);
   playHitSound(lethal);
 }
 
