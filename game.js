@@ -163,9 +163,9 @@ function announceIntent(actionType) {
 
 // ---- 難易度定義 ----
 const DIFFICULTIES = {
-  easy: { label: 'かんたん', playerMaxHp: 30, enemyHpMult: 0.9, enemyAtkMult: 0.9 },
-  normal: { label: 'ふつう', playerMaxHp: 26, enemyHpMult: 0.95, enemyAtkMult: 0.92 },
-  hard: { label: 'むずかしい', playerMaxHp: 25, enemyHpMult: 1.15, enemyAtkMult: 1.02 },
+  easy: { label: 'かんたん', playerMaxHp: 36, enemyHpMult: 0.87, enemyAtkMult: 0.87 },
+  normal: { label: 'ふつう', playerMaxHp: 33, enemyHpMult: 0.915, enemyAtkMult: 0.885 },
+  hard: { label: 'むずかしい', playerMaxHp: 33, enemyHpMult: 1.04, enemyAtkMult: 0.91 },
 };
 
 // ---- モンスター定義 ----
@@ -179,13 +179,19 @@ function spawnEnemyForFloor(floor) {
   const type = choice(MONSTER_TYPES);
   const diff = DIFFICULTIES[state.difficulty];
   const isBossFloor = floor % BUFF_FLOOR_INTERVAL === 0;
-  const scale = Math.floor((floor - 1) * 0.3);
+  // 序盤(1〜数階)は星3の強力カードがまだ引けていない前提で、敵の成長開始を
+  // 少し遅らせて猶予を作る。猶予後の伸び率は据え置きなので終盤の歯応えは変わらない。
+  const HP_SCALE_GRACE = 10;
+  const ATK_SCALE_GRACE = 7;
+  // 猶予後の伸び率は据え置き0.3ではなく0.34に少し上げ、猶予で軽くした分だけ
+  // 終盤(80〜100階)がその場しのぎで際限なく押し切れてしまわないようにする。
+  const scale = Math.floor(Math.max(0, floor - 1 - HP_SCALE_GRACE) * 0.34);
   let hp = Math.round((type.hpBase + scale) * diff.enemyHpMult);
-  let atk = Math.round((type.atkBase + Math.floor((floor - 1) / 12)) * diff.enemyAtkMult);
+  let atk = Math.round((type.atkBase + Math.floor(Math.max(0, floor - 1 - ATK_SCALE_GRACE) / 11)) * diff.enemyAtkMult);
   let name = type.name;
   if (isBossFloor) {
-    hp = Math.round(hp * 1.25);
-    atk = Math.round(atk * 1.12);
+    hp = Math.round(hp * 1.35);
+    atk = Math.round(atk * 1.18);
     name = `ボス${name}`;
   }
   const enemy = {
@@ -262,6 +268,10 @@ function pickWeightedRewardCards(pool, n) {
   return chosen;
 }
 
+// 報酬画面で「デッキから1枚除去する」を選べる確率。毎回使えると
+// デッキ圧縮が強すぎるため、低確率のランダムイベント扱いにする。
+const REMOVE_CARD_EVENT_CHANCE = 0.25;
+
 const MAX_FLOOR = 100;
 const BUFF_FLOOR_INTERVAL = 10;
 
@@ -271,16 +281,16 @@ const BUFF_FLOOR_INTERVAL = 10;
 // すべて「その場限り」の一回性のものに限定する。
 const BUFF_LIBRARY = {
   vigor: {
-    id: 'vigor', name: '活力の心得', desc: '最大HP+15、HPを最大まで全回復',
+    id: 'vigor', name: '活力の心得', desc: '最大HP+16、HPを最大まで全回復',
     apply: () => {
-      state.player.maxHp += 15;
+      state.player.maxHp += 16;
       state.player.hp = state.player.maxHp;
     },
   },
   renewal: {
-    id: 'renewal', name: '再生の心得', desc: '最大HPの50%(端数切上)を回復する',
+    id: 'renewal', name: '再生の心得', desc: '最大HPの52%(端数切上)を回復する',
     apply: () => {
-      const amt = Math.ceil(state.player.maxHp * 0.5);
+      const amt = Math.ceil(state.player.maxHp * 0.52);
       state.player.hp = Math.min(state.player.maxHp, state.player.hp + amt);
     },
   },
@@ -621,8 +631,12 @@ function renderRewardPicks() {
   });
 
   // 1枚を切ってしまうと山札が空になり得るため、除去はデッキが2枚以上の時のみ可能にする。
+  // デッキ除去は毎回使えると強すぎるため、ランダムイベントとして低確率でのみ
+  // 出現するようにする。1枚を切ってしまうと山札が空になり得るため、
+  // デッキが2枚以上の時のみ対象。
   const removeBtn = document.getElementById('removeCardBtn');
-  removeBtn.style.display = state.player.deck.length > 1 ? '' : 'none';
+  const canOfferRemove = state.player.deck.length > 1 && Math.random() < REMOVE_CARD_EVENT_CHANCE;
+  removeBtn.style.display = canOfferRemove ? '' : 'none';
 }
 
 function renderRemoveDeckList() {
