@@ -46,7 +46,23 @@ have passed since the last one.
   `BUFF_POOL`'s current size (was 3 — vigor/renewal/cleanse — for a long
   stretch of this project's history; note if it's still exactly that).
 
-## Step 3: balance health sanity check
+## Step 3: dominance check on choice pools
+
+Independent of any specific diff, re-read `BUFF_LIBRARY`/`BUFF_POOL` (small
+enough to eyeball every run) and spot-check a few `CARD_LIBRARY` entries at
+matching cost tiers. For every pair of options a player could be offered
+together, ask: is there ever a real reason to pick the "weaker" one, or does
+one strictly dominate (same or better in every dimension, worse in none)?
+This is exactly the kind of slow-drift issue nothing else in the pipeline
+checks for — individual balance-tester passes compare a change against
+aggregate stats, not options against each other within the same pool. A
+strictly dominated buff (e.g. a heal-only option that's worse in every way
+than a permanent-stat-plus-heal option) can sit unnoticed for a long stretch
+because win rate alone never looks "wrong." Report any dominance you find,
+even outside a full staleness/balance check — this doesn't need the 3-hour
+gate in step 1, do it every time you run at all.
+
+## Step 4: balance health sanity check
 
 Run a moderate playtest batch (`node tools/playtest.js 30`, all three
 difficulties) independent of any specific recent diff. Compare against the
@@ -66,7 +82,7 @@ a real balance problem, report it clearly (with numbers) so the orchestrator
 can dispatch `game-balance-tester` to actually fix it, the same way any other
 pipeline stage would hand off a finding.
 
-## Step 4: update BACKLOG.md
+## Step 5: update BACKLOG.md
 
 Maintain your own `## game-content-health-auditor` section in `BACKLOG.md` at
 the repo root (create it if this is the first run) — don't touch other
