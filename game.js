@@ -534,6 +534,15 @@ function renderBattle() {
   document.getElementById('battleEnemyHpBar').style.width = `${Math.max(0, state.enemy.hp) / state.enemy.maxHp * 100}%`;
   document.getElementById('battleEnemyIntent').textContent = getEnemyIntentText(state.enemy);
   document.getElementById('battlePlayerHp').textContent = `${Math.max(0, state.player.hp)} / ${state.player.maxHp}`;
+  const playerHpPct = Math.max(0, state.player.hp) / state.player.maxHp * 100;
+  const playerHpBar = document.getElementById('battlePlayerHpBar');
+  playerHpBar.style.width = `${playerHpPct}%`;
+  playerHpBar.classList.remove('hpTier--warning', 'hpTier--danger');
+  if (playerHpPct < 25) {
+    playerHpBar.classList.add('hpTier--danger');
+  } else if (playerHpPct <= 50) {
+    playerHpBar.classList.add('hpTier--warning');
+  }
   document.getElementById('battlePlayerBlock').textContent = b.block;
   document.getElementById('battlePlayerEnergy').textContent = `${b.energy} / ${b.maxEnergy}`;
 
