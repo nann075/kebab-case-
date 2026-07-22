@@ -131,6 +131,48 @@ it as observations/hypotheses, not hard verdicts, and don't make large
 mechanical changes (new cards, new formulas) on this basis alone without
 it being asked for; numeric tuning of existing values is fine.
 
+## Cost/rarity should predict power, not just efficiency-cap everything
+
+Past tuning passes have tended to flatten every card toward the same
+per-energy efficiency score (using `raw = damage*hits*2 + block*1.5`,
+`score = raw / Math.max(cost, 0.5)`) to avoid any single card being
+dominant. That instinct is right for *same-cost, same-star* cards, but
+applied indiscriminately it produces a game where `star` (rarity) has no
+relationship to power at all — e.g. at one point `strike` (star 1) and
+`brace`/`double_strike` (star 3) all scored exactly 12 at cost 1, so
+pulling a "rare" card in the reward screen was no stronger than the
+common baseline, just less frequent. A user flagged this directly: in
+basically every card game (MTG, Hearthstone, Slay the Spire, etc.) both
+higher cost *and* higher rarity are expected to raise a card's power, not
+just its scarcity.
+
+Going forward, treat `cost` and `star` as two axes that should both
+predict `score`:
+
+- **Cost axis**: cards at the same star tier should land close to the
+  same efficiency (`score`) regardless of cost — this is what prevents
+  "always pay more, it's strictly better" builds and is already mostly
+  respected.
+- **Star axis**: at a *fixed* cost, star should add a real premium on
+  top of the star-1 baseline for that cost tier — roughly star 2 ≈
+  +10-20% over the star-1 baseline score, star 3 ≈ +25-40% over it. A
+  star-3 card should feel like a meaningfully better pull, not just a
+  rarer-but-equal one. The 10% offer weight for star 3
+  (`REWARD_STAR_WEIGHTS`) is what keeps this from being oppressive —
+  don't compensate for the power premium by flattening scores back down;
+  compensate (if needed) via reward frequency or the difficulty curve,
+  same pattern as the earlier `quick_slash` rework.
+- When you find a star tier that doesn't respect this (a star-1 card
+  scoring the same as or higher than a star-3 card at the same cost),
+  that's a real finding worth fixing even if win rate looks fine — flag
+  it and correct the numbers (or the star assignment) so the curve holds.
+- Also watch for **stat-identical reskins** — two cards with the same
+  cost/damage/block/hits and only the name/star differing (this has
+  happened at least twice: `shield_bash`/`defend`, `strike`/`flame_slash`).
+  A rarer reskin of an identical-stat common is the same problem as
+  above wearing a different hat — differentiate the numbers, don't just
+  rename.
+
 ## Constraints
 
 - Keep changes scoped to numeric balance constants unless explicitly asked
