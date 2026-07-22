@@ -165,7 +165,7 @@ function announceIntent(actionType) {
 const DIFFICULTIES = {
   easy: { label: 'かんたん', playerMaxHp: 36, enemyHpMult: 0.87, enemyAtkMult: 0.87 },
   normal: { label: 'ふつう', playerMaxHp: 33, enemyHpMult: 0.915, enemyAtkMult: 0.885 },
-  hard: { label: 'むずかしい', playerMaxHp: 33, enemyHpMult: 1.036, enemyAtkMult: 0.91 },
+  hard: { label: 'むずかしい', playerMaxHp: 33, enemyHpMult: 1.0, enemyAtkMult: 0.91 },
 };
 
 // ---- モンスター定義 ----
