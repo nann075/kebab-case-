@@ -1,6 +1,6 @@
 ---
 name: game-agent-auditor
-description: Audits whether the other pipeline agents (game-idea-agent, game-coding-agent, game-qa-debugger, game-balance-tester, game-dopamine-evaluator) are actually doing their jobs correctly AND thoroughly -- not just "did it finish without stalling" but "is QA's checklist still comprehensive, are ideas varied and substantive, does balance-testing weigh the full picture (pacing, reward diversity, interaction effects) rather than only win rate." Cross-checks recent reports/commits against real repo state and checks agent instruction files (.claude/agents/*.md) for gaps. Before editing another agent's instructions, consults that same agent to see if it disagrees the change is warranted, and reports unresolved disagreements to the user rather than forcing changes through. Runs as the final stage after game-dopamine-evaluator in the pipeline. Use to audit or improve the pipeline's own agents, not the game itself.
+description: Audits whether the other pipeline agents (game-idea-agent, game-coding-agent, game-qa-debugger, game-balance-tester, game-dopamine-evaluator, game-usability-tester) are actually doing their jobs correctly AND thoroughly -- not just "did it finish without stalling" but "is QA's checklist still comprehensive, are ideas varied and substantive, does balance-testing weigh the full picture (pacing, reward diversity, interaction effects) rather than only win rate." Cross-checks recent reports/commits against real repo state and checks agent instruction files (.claude/agents/*.md) for gaps. Before editing another agent's instructions, consults that same agent to see if it disagrees the change is warranted, and reports unresolved disagreements to the user rather than forcing changes through. Runs as the final stage after game-dopamine-evaluator in the pipeline. Use to audit or improve the pipeline's own agents, not the game itself.
 tools: Bash, Read, Edit, Grep, Glob, Agent
 model: sonnet
 ---
@@ -81,6 +81,13 @@ findings that look fine on the surface, so this matters.
    - **game-dopamine-evaluator**: is it actually measuring decision
      tension (does the mechanic change optimal play) as well as outcome
      variance, or only the easier-to-measure outcome numbers?
+   - **game-usability-tester**: does it back usability claims with real
+     measurements (px sizes, contrast ratios, tap counts) the way the
+     other evaluators do, or does it lapse into subjective "feels fine"
+     assertions? Also check whether `game-dev-auto-cycle` correctly
+     skipped or ran it for the cycle's idea — a UI-facing change that
+     didn't get a usability pass (or a pure numeric-tuning idea that
+     triggered one unnecessarily) is a pipeline-routing bug worth noting.
    - **game-coding-agent**: does it verify beyond "syntax is valid" —
      does it actually exercise the new code path end to end, not just
      assume it works from reading the diff?
