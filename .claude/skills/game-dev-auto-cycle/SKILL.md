@@ -108,6 +108,22 @@ from the finding stage's own commit) rather than launching a fresh
 If a finding doesn't meet all four, route it to `game-coding-agent` as a
 fresh implementation task instead of fixing it inline.
 
+**Stage 5 (Dopamine) findings are eligible too, but need a stricter test
+than the four criteria above**: dopamine findings are often about
+audio/timing/UX *quality* rather than mechanical correctness, so only
+direct-fix when the chosen value is a strict function of an existing
+coded constant that fully resolves the described problem (e.g. a delay
+set to *at least* an already-coded decay/duration constant, not a
+partial or "largely enough" fraction of it). If the finding or the
+fix's own justification uses hedge words like "largely," "mostly," or
+"should feel," that's a tuning call, not a mechanical fix — route it to
+`game-coding-agent` instead. (Precedent: commit 1110008 set a 220ms
+delay against a coded 350ms decay constant, justified as "largely
+decayed" — under this rule that would have failed the strict-function
+test and should have routed out; it wasn't reverted since it works and
+was independently verified, but future stage-5 findings should be held
+to this line, not to what that commit did.)
+
 ## Stopping the loop
 
 This loop is intended to run continuously, 24/7/365, by explicit user
