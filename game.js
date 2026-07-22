@@ -261,7 +261,10 @@ function playCard(index) {
 
   if (card.damage) {
     const hits = card.hits || 1;
-    const dmg = card.damage * hits;
+    let dmg = card.damage * hits;
+    if (state.enemy.isBoss && state.enemy.actionType === 'guard') {
+      dmg = Math.max(0, Math.round(dmg * 0.5));
+    }
     state.enemy.hp -= dmg;
     log(`${card.name}で${state.enemy.name}に${dmg}ダメージ！`);
   }
@@ -303,7 +306,7 @@ function enemyBattleAttack() {
       enemy.chargeBonus = true;
       log(`${enemy.name}は力を溜めている...`);
     } else if (enemy.actionType === 'guard') {
-      log(`${enemy.name}は防御の構えを取った`);
+      log(`${enemy.name}は防御の構えを取った(与ダメージ半減)`);
     } else {
       let atk = enemy.atk;
       if (enemy.chargeBonus) {
@@ -363,7 +366,7 @@ function buildCardElement(cardId) {
 function getEnemyIntentText(enemy) {
   if (enemy.isBoss) {
     if (enemy.actionType === 'charge') return '次のターン: 溜めている(次は2倍ダメージ)';
-    if (enemy.actionType === 'guard') return '次のターン: 防御態勢';
+    if (enemy.actionType === 'guard') return '次のターン: 防御態勢(与ダメージ半減)';
     const atk = enemy.chargeBonus ? enemy.atk * 2 : enemy.atk;
     return `次の攻撃: ${atk}ダメージ`;
   }
