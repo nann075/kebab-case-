@@ -224,11 +224,19 @@ const CARD_LIBRARY = {
   double_strike: { id: 'double_strike', name: 'ダブルストライク', cost: 1, type: 'attack', damage: 3, hits: 2, star: 3, desc: '3ダメージを2回与える' },
   shield_bash: { id: 'shield_bash', name: 'シールドバッシュ', cost: 1, type: 'attack', damage: 3, block: 4, star: 1, desc: '3ダメージを与え、4ブロックを得る' },
   quick_slash: { id: 'quick_slash', name: 'クイックスラッシュ', cost: 0, type: 'attack', damage: 3, star: 3, desc: '3ダメージを与える' },
-  flame_slash: { id: 'flame_slash', name: 'フレイムスラッシュ', cost: 1, type: 'attack', damage: 6, star: 3, desc: '6ダメージを与える' },
+  flame_slash: { id: 'flame_slash', name: 'フレイムスラッシュ', cost: 1, type: 'attack', damage: 8, star: 3, desc: '8ダメージを与える' },
   guard_up: { id: 'guard_up', name: 'ガードアップ', cost: 2, type: 'skill', block: 14, star: 2, desc: '14ブロックを得る' },
   triple_jab: { id: 'triple_jab', name: 'トリプルジャブ', cost: 2, type: 'attack', damage: 3, hits: 3, star: 1, desc: '3ダメージを3回与える' },
   brace: { id: 'brace', name: 'ブレイス', cost: 1, type: 'skill', block: 8, star: 3, desc: '8ブロックを得る' },
   finishing_blow: { id: 'finishing_blow', name: 'フィニッシングブロー', cost: 2, type: 'attack', damage: 10, star: 2, desc: '10ダメージを与える' },
+  step_back: { id: 'step_back', name: 'ステップバック', cost: 0, type: 'skill', block: 3, star: 2, desc: '3ブロックを得る' },
+  riposte: { id: 'riposte', name: 'リポスト', cost: 1, type: 'attack', damage: 4, block: 3, star: 2, desc: '4ダメージを与え、3ブロックを得る' },
+  tower_shield: { id: 'tower_shield', name: 'タワーシールド', cost: 2, type: 'skill', block: 12, star: 1, desc: '12ブロックを得る' },
+  critical_sword: { id: 'critical_sword', name: 'クリティカルソード', cost: 2, type: 'attack', damage: 15, star: 3, desc: '15ダメージを与える' },
+  twin_greatsword: { id: 'twin_greatsword', name: '双大剣', cost: 2, type: 'attack', damage: 7, hits: 2, star: 3, desc: '7ダメージを2回与える' },
+  ultimate_slash: { id: 'ultimate_slash', name: 'アルティメットスラッシュ', cost: 3, type: 'attack', damage: 24, star: 3, desc: '24ダメージを与える' },
+  fortress: { id: 'fortress', name: 'フォートレス', cost: 3, type: 'skill', block: 30, star: 3, desc: '30ブロックを得る' },
+  mist_cut: { id: 'mist_cut', name: 'かすみ斬り', cost: 1, type: 'attack', damage: 3, hits: 2, block: 2, star: 2, desc: '3ダメージを2回与え、2ブロックを得る' },
 };
 
 const STARTER_DECK = [
@@ -240,6 +248,8 @@ const STARTER_DECK = [
 const REWARD_POOL = [
   'bash', 'iron_wave', 'double_strike', 'shield_bash', 'quick_slash', 'strike', 'defend',
   'flame_slash', 'guard_up', 'triple_jab', 'brace', 'finishing_blow',
+  'step_back', 'riposte', 'tower_shield', 'critical_sword', 'twin_greatsword',
+  'ultimate_slash', 'fortress', 'mist_cut',
 ];
 
 // 報酬画面での星ランク別の抽選重み。星3(強力なカード)はだいぶ出にくくする。
