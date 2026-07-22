@@ -80,6 +80,34 @@ broken cycle forward, and say clearly what's blocked and why — and don't
 schedule a next cycle in that case either, so the loop doesn't hammer on
 the same blocker repeatedly.
 
+## Direct fixes vs. routing to game-coding-agent
+
+Stages 3 (Test), 6 (Usability), and 7 (Feel) can surface concrete,
+well-specified problems, not just design suggestions. The orchestrator
+running this skill may fix these directly (as its own commit, separate
+from the finding stage's own commit) rather than launching a fresh
+`game-coding-agent` invocation, when the fix is:
+- **Small** — realistically a handful of lines, not a new subsystem.
+- **Fully specified by the finding itself** — the finding already names
+  the exact file/lines and what's wrong; applying it doesn't require
+  inventing new design (e.g. "this CSS selector is missing an id" or
+  "this timeout isn't tracked per-element" is fully specified; "this
+  card feels underpowered" is not).
+- **Not a change to a gameplay-numeric table** — even a one-line,
+  fully-specified-looking change to `CARD_LIBRARY`/`MONSTER_TYPES`/
+  `REWARD_POOL`/`BUFF_POOL`/`DIFFICULTIES` values is a balance judgment
+  call, not a mechanical fix, regardless of line count. Always route
+  those to `game-coding-agent` (or let `game-balance-tester` handle it
+  per its own tuning rules if that's the stage that found it).
+- **Verified before committing** — if the finding came with its own
+  repro steps, actually reproduce them (e.g. a small Playwright probe)
+  and confirm the fix resolves them, not just a syntax check. Fall back
+  to a syntax/sanity check only when the finding has no reproducible
+  repro to begin with.
+
+If a finding doesn't meet all four, route it to `game-coding-agent` as a
+fresh implementation task instead of fixing it inline.
+
 ## Stopping the loop
 
 This loop is intended to run continuously, 24/7/365, by explicit user
