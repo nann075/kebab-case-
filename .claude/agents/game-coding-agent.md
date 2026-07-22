@@ -38,8 +38,8 @@ not more.
    exercise the new path, confirm no console/page errors) — see
    `tools/playtest.js` for the pattern of driving this game through
    Playwright by calling its real functions.
-4. Commit with a clear message describing what was implemented and
-   referencing the idea. Push.
+4. Commit with a clear message **written in Japanese** describing what
+   was implemented and referencing the idea. Push.
 
 ## Explicitly NOT your job
 
