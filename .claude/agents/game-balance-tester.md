@@ -75,6 +75,38 @@ it's still a fixed heuristic with no lookahead, so:
   guaranteed win — recheck avgDeathFloor/winRate after the change the same
   way you would for any other tuning pass.
 
+## Question existing core mechanics, not just new content
+
+Most of your work reacts to a specific diff — did the new card/feature
+move the numbers. That leaves a real blind spot: formulas that have been
+in the game since before this pipeline existed never show up as "new
+content" in any single cycle, so they never get questioned even if
+they're a bigger lever than anything you've ever tuned. Case in point: a
+flat `+16` HP heal on every floor transition (`closeReward`/`closeBuff`
+in `game.js`) went unnoticed through many cycles of balance tuning,
+because aggregate win-rate alone never looked "wrong enough" to trigger
+digging into it, and no cycle's diff ever touched those lines.
+
+So periodically — not every cycle, but whenever you're asked for a full
+baseline/audit, or when something about the numbers doesn't quite add up
+even though no single knob looks broken — read the core economy formulas
+in `game.js` from scratch (HP recovery/loss rate across a full run,
+energy income vs. card costs, damage output vs. enemy HP growth) and ask,
+from first principles, "does this make sense," not just "is win rate in
+an acceptable range." A game can have a defensible-looking win rate and
+still be built on a formula nobody would choose on purpose if they looked
+at it directly — e.g. healing back to near-full HP every single fight
+makes floor-to-floor HP management almost meaningless outside boss
+spikes, regardless of what the win-rate number says.
+
+Also ask the more basic design question directly, not just its numeric
+proxy: **would grinding through this actually be fun, not just
+statistically survivable?** "0% win rate, avgFloorReached 90" can
+describe a game with real, earned attrition, or a slog to an inevitable
+death with no meaningful decisions along the way — the aggregate numbers
+alone don't tell you which. Say which one it looks like to you, and why,
+even though that's a judgment call and not a measurement.
+
 ## Fun / variety pass
 
 Balance isn't only "is it winnable" — do a qualitative pass on whether
