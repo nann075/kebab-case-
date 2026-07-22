@@ -91,6 +91,26 @@ as `tools/playtest.js`:
   Report the pixel delta of any control that moves as cards are
   played/discarded, at both desktop and mobile widths.
 
+**Text/content accuracy** — not just "does it render," but "is what it
+says true and unambiguous":
+- For every card in `CARD_LIBRARY` (and every buff in `BUFF_LIBRARY`),
+  compare its `desc` text against what the code actually does with its
+  fields (`cost`/`damage`/`hits`/`block` in `playCard`, buff effects in
+  the buff-selection handler). Flag descriptions that imply behavior the
+  code doesn't have — e.g. a fixed-cost card whose text implies dynamic
+  energy-scaling, or a "chance to X" phrase when the effect is actually
+  guaranteed (or vice versa). Read the desc the way a player deciding
+  whether to play the card would, not just as flavor text.
+- Look across all simultaneously-visible UI regions (`#stats`,
+  `#battlePlayer`, `#battleEnemy`, card text, buff/reward overlays) for
+  the same value shown in more than one place, or two labels that could
+  read as referring to different things when they're actually the same
+  stat. Redundant or ambiguously-labeled displays are a real bug class
+  even when each individual number is correct (confirmed once already:
+  player HP was shown both in the top `#stats` panel and next to
+  Block/Energy in `#battlePlayer`, with no way to tell from the labels
+  alone that they were the same number).
+
 ## Log analysis
 
 The in-battle log (`state.messages`, rendered into `#log`) is not just
