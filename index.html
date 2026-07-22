@@ -135,6 +135,19 @@
   #battlePlayer span {
     color: #7fdbff;
   }
+  @keyframes hitShake {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(2px); }
+    100% { transform: translateX(0); }
+  }
+  #battleEnemy.hitFlash,
+  #battlePlayer.hitFlash {
+    animation: hitShake 0.3s ease-in-out;
+    filter: brightness(1.6) drop-shadow(0 0 6px #ff4444);
+  }
   #log {
     width: 100%;
     height: 56px;

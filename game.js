@@ -23,6 +23,55 @@ function pickRandomUnique(pool, n) {
   return result;
 }
 
+// ---- ヒット演出 (画面フラッシュ/シェイク + 効果音) ----
+let audioCtx = null;
+function getAudioCtx() {
+  // ブラウザの自動再生制限を避けるため、初回のユーザー操作後に遅延生成する
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    audioCtx = new Ctx();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+function playBeep(freq, duration, type) {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type || 'square';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.15, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + duration);
+}
+
+function playHitSound(lethal) {
+  if (lethal) {
+    playBeep(160, 0.35, 'sawtooth');
+  } else {
+    playBeep(440, 0.1, 'square');
+  }
+}
+
+function flashHit(elementId, lethal) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  el.classList.remove('hitFlash');
+  // 強制リフロー: アニメーションを連続ヒット時にも再トリガーできるようにする
+  void el.offsetWidth;
+  el.classList.add('hitFlash');
+  setTimeout(() => el.classList.remove('hitFlash'), 300);
+  playHitSound(lethal);
+}
+
 // ---- 難易度定義 ----
 const DIFFICULTIES = {
   easy: { label: 'かんたん', playerMaxHp: 30, enemyHpMult: 0.9, enemyAtkMult: 0.9 },
@@ -268,6 +317,7 @@ function playCard(index) {
     }
     state.enemy.hp -= dmg;
     log(`${card.name}で${state.enemy.name}に${dmg}ダメージ！`);
+    flashHit('battleEnemy', state.enemy.hp <= 0);
   }
   if (card.block) {
     b.block += card.block;
@@ -301,6 +351,7 @@ function enemyBattleAttack() {
     b.block = Math.max(0, b.block - enemy.atk);
     state.player.hp -= dmg;
     log(`${enemy.name}の攻撃！ ${dmg}ダメージを受けた`);
+    flashHit('battlePlayer', state.player.hp <= 0);
   } else {
     // ボス: 事前に予告(intent)していた行動をそのまま解決する
     if (enemy.actionType === 'charge') {
@@ -318,6 +369,7 @@ function enemyBattleAttack() {
       b.block = Math.max(0, b.block - atk);
       state.player.hp -= dmg;
       log(`${enemy.name}の攻撃！ ${dmg}ダメージを受けた`);
+      flashHit('battlePlayer', state.player.hp <= 0);
     }
     // 次ターンの行動をここで抽選し、次に見せるintentと実際の解決を一致させる
     rollBossAction(enemy);
