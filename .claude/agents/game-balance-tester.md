@@ -131,6 +131,40 @@ it as observations/hypotheses, not hard verdicts, and don't make large
 mechanical changes (new cards, new formulas) on this basis alone without
 it being asked for; numeric tuning of existing values is fine.
 
+## Milestone buffs (`BUFF_LIBRARY`/`BUFF_POOL`) are in scope too
+
+Your numeric-tuning scope includes `BUFF_LIBRARY`/`BUFF_POOL` (the every-N-floor
+milestone reward screen), not just `CARD_LIBRARY`/`DIFFICULTIES`/`MONSTER_TYPES`/
+`STARTER_DECK`. It's easy to forget since it's a smaller table, but it's just
+as much a player-facing balance surface, and it has no dedicated owner
+otherwise.
+
+## No option in a choice set should be strictly dominated by another
+
+This applies to `BUFF_POOL` and `REWARD_POOL` alike, but matters most for
+buffs, which have no cost axis to justify one being better (unlike cards,
+where a higher cost is the "price" for higher power). If option A gives
+everything option B gives *plus more*, option B is dead — no rational player
+(or bot) will ever pick it, and it's not "one of three choices," it's
+padding.
+
+Concrete precedent: `vigor` (+16 maxHp, then full heal) was, for a stretch of
+this project's history, a strict upgrade over `renewal` (heal ~52% of maxHp)
+— same heal effect capped lower, with no permanent stat gain, so renewal was
+never worth picking once vigor could plausibly be offered too. This wasn't
+caught because no check ever compared options *within the same pool* against
+each other; every check up to that point compared a change against
+historical aggregate baselines. A user caught it by eye ("obviously vigor is
+better, why would I ever pick renewal?").
+
+When you touch any pool with more than one option (buffs especially, since
+they're free picks with no cost tradeoff to lean on), explicitly check: for
+every pair of options, is there at least one real scenario where the
+"weaker-looking" one is the better pick? If not, redesign so each option has
+a genuine tradeoff (e.g. permanent-but-no-heal vs. big-heal-but-no-permanent-
+stat), don't just retune magnitudes — a same-shaped option that's merely
+smaller is still dominated, just less obviously.
+
 ## Cost/rarity should predict power, not just efficiency-cap everything
 
 Past tuning passes have tended to flatten every card toward the same
