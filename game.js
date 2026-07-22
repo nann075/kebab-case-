@@ -104,6 +104,32 @@ function flashHit(elementId, lethal) {
   playHitSound(lethal);
 }
 
+// ---- ボスの予告(intent)演出 ----
+// ダメージ演出(hitFlash/playHitSound)とは異なる、「通知」として読める
+// サイン波の二音ビープ + 控えめな色フラッシュ。攻撃/溜め/防御の種別は
+// 問わず共通の合図とする(種別ごとの音色分けは将来の拡張課題)。
+let intentAlertTimer = null;
+function playIntentAlertSound() {
+  playBeep(330, 0.08, 'sine');
+  setTimeout(() => playBeep(494, 0.12, 'sine'), 90);
+}
+function announceIntent() {
+  const el = document.getElementById('battleEnemyIntent');
+  if (!el) return;
+  // 連続するボスのターンで前回の片付けタイマーが今回のアニメーションを
+  // 早期に打ち切らないよう、専用のタイマーIDだけを有効にする。
+  if (intentAlertTimer) clearTimeout(intentAlertTimer);
+  el.classList.remove('intentAlert');
+  // 強制リフロー: アニメーションを連続予告時にも再トリガーできるようにする
+  void el.offsetWidth;
+  el.classList.add('intentAlert');
+  intentAlertTimer = setTimeout(() => {
+    el.classList.remove('intentAlert');
+    intentAlertTimer = null;
+  }, 400);
+  playIntentAlertSound();
+}
+
 // ---- 難易度定義 ----
 const DIFFICULTIES = {
   easy: { label: 'かんたん', playerMaxHp: 30, enemyHpMult: 0.9, enemyAtkMult: 0.9 },
@@ -411,6 +437,8 @@ function enemyBattleAttack() {
     }
     // 次ターンの行動をここで抽選し、次に見せるintentと実際の解決を一致させる
     rollBossAction(enemy);
+    // プレイヤーがこの攻撃で倒れた場合、次のintentを予告する意味がないので鳴らさない
+    if (state.player.hp > 0) announceIntent();
   }
 
   if (state.player.hp <= 0) {

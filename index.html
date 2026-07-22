@@ -152,6 +152,16 @@
     animation: hitShake 0.3s ease-in-out;
     filter: brightness(1.6) drop-shadow(0 0 6px #ff4444);
   }
+  @keyframes intentPulse {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+  #battleEnemyIntent.intentAlert {
+    animation: intentPulse 0.4s ease-in-out;
+    color: #fff59d;
+    text-shadow: 0 0 6px #ffe082;
+  }
   #log {
     width: 100%;
     height: 56px;
