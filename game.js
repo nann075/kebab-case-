@@ -109,9 +109,17 @@ function flashHit(elementId, lethal) {
 // サイン波の二音ビープ + 控えめな色フラッシュ。攻撃/溜め/防御の種別は
 // 問わず共通の合図とする(種別ごとの音色分けは将来の拡張課題)。
 let intentAlertTimer = null;
+let intentAlertSoundStartTimer = null;
+let intentAlertSoundTimer = null;
 function playIntentAlertSound() {
+  // 2音目のタイマーも追跡し、連続予告時に前回の音色を打ち切ってから
+  // 今回の2音目だけを鳴らす(flashHit/playEndGameStingと同じ方針)。
+  if (intentAlertSoundTimer) clearTimeout(intentAlertSoundTimer);
   playBeep(330, 0.08, 'sine');
-  setTimeout(() => playBeep(494, 0.12, 'sine'), 90);
+  intentAlertSoundTimer = setTimeout(() => {
+    playBeep(494, 0.12, 'sine');
+    intentAlertSoundTimer = null;
+  }, 90);
 }
 function announceIntent() {
   const el = document.getElementById('battleEnemyIntent');
@@ -127,7 +135,14 @@ function announceIntent() {
     el.classList.remove('intentAlert');
     intentAlertTimer = null;
   }, 400);
-  playIntentAlertSound();
+  // ボスの攻撃ターンではflashHitのヒット音(0.1秒)が同じ瞬間に鳴るため、
+  // それが鳴り終わってから予告音を鳴らして音が濁らないようにする。
+  // この開始遅延自体も、連続予告時に前回の分が今回の音をつぶさないよう追跡する。
+  if (intentAlertSoundStartTimer) clearTimeout(intentAlertSoundStartTimer);
+  intentAlertSoundStartTimer = setTimeout(() => {
+    intentAlertSoundStartTimer = null;
+    playIntentAlertSound();
+  }, 120);
 }
 
 // ---- 難易度定義 ----
