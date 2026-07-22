@@ -208,19 +208,21 @@ function rollBossAction(enemy) {
 }
 
 // ---- カード定義 ----
+// starはカードの強さの目安(1〜3)。数値が高いほど強力で、報酬画面での
+// 出現率も低くなる(pickWeightedRewardCards参照)。
 const CARD_LIBRARY = {
-  strike: { id: 'strike', name: 'ストライク', cost: 1, type: 'attack', damage: 6, desc: '6ダメージを与える' },
-  defend: { id: 'defend', name: 'ディフェンド', cost: 1, type: 'skill', block: 6, desc: '6ブロックを得る' },
-  bash: { id: 'bash', name: 'バッシュ', cost: 2, type: 'attack', damage: 12, desc: '12ダメージを与える' },
-  iron_wave: { id: 'iron_wave', name: 'アイアンウェーブ', cost: 2, type: 'attack', damage: 6, block: 8, desc: '6ダメージを与え、8ブロックを得る' },
-  double_strike: { id: 'double_strike', name: 'ダブルストライク', cost: 1, type: 'attack', damage: 3, hits: 2, desc: '3ダメージを2回与える' },
-  shield_bash: { id: 'shield_bash', name: 'シールドバッシュ', cost: 1, type: 'skill', block: 6, desc: '6ブロックを得る' },
-  quick_slash: { id: 'quick_slash', name: 'クイックスラッシュ', cost: 0, type: 'attack', damage: 5, desc: '0コストで5ダメージを与える' },
-  flame_slash: { id: 'flame_slash', name: 'フレイムスラッシュ', cost: 1, type: 'attack', damage: 7, desc: '7ダメージを与える' },
-  guard_up: { id: 'guard_up', name: 'ガードアップ', cost: 2, type: 'skill', block: 14, desc: '14ブロックを得る' },
-  triple_jab: { id: 'triple_jab', name: 'トリプルジャブ', cost: 2, type: 'attack', damage: 3, hits: 3, desc: '3ダメージを3回与える' },
-  brace: { id: 'brace', name: 'ブレイス', cost: 1, type: 'skill', block: 8, desc: '8ブロックを得る' },
-  finishing_blow: { id: 'finishing_blow', name: 'フィニッシングブロー', cost: 3, type: 'attack', damage: 10, desc: '10ダメージを与える' },
+  strike: { id: 'strike', name: 'ストライク', cost: 1, type: 'attack', damage: 6, star: 1, desc: '6ダメージを与える' },
+  defend: { id: 'defend', name: 'ディフェンド', cost: 1, type: 'skill', block: 6, star: 1, desc: '6ブロックを得る' },
+  bash: { id: 'bash', name: 'バッシュ', cost: 2, type: 'attack', damage: 12, star: 3, desc: '12ダメージを与える' },
+  iron_wave: { id: 'iron_wave', name: 'アイアンウェーブ', cost: 2, type: 'attack', damage: 6, block: 8, star: 3, desc: '6ダメージを与え、8ブロックを得る' },
+  double_strike: { id: 'double_strike', name: 'ダブルストライク', cost: 1, type: 'attack', damage: 3, hits: 2, star: 1, desc: '3ダメージを2回与える' },
+  shield_bash: { id: 'shield_bash', name: 'シールドバッシュ', cost: 1, type: 'skill', block: 6, star: 1, desc: '6ブロックを得る' },
+  quick_slash: { id: 'quick_slash', name: 'クイックスラッシュ', cost: 0, type: 'attack', damage: 5, star: 1, desc: '0コストで5ダメージを与える' },
+  flame_slash: { id: 'flame_slash', name: 'フレイムスラッシュ', cost: 1, type: 'attack', damage: 7, star: 2, desc: '7ダメージを与える' },
+  guard_up: { id: 'guard_up', name: 'ガードアップ', cost: 2, type: 'skill', block: 14, star: 3, desc: '14ブロックを得る' },
+  triple_jab: { id: 'triple_jab', name: 'トリプルジャブ', cost: 2, type: 'attack', damage: 3, hits: 3, star: 2, desc: '3ダメージを3回与える' },
+  brace: { id: 'brace', name: 'ブレイス', cost: 1, type: 'skill', block: 8, star: 1, desc: '8ブロックを得る' },
+  finishing_blow: { id: 'finishing_blow', name: 'フィニッシングブロー', cost: 3, type: 'attack', damage: 10, star: 2, desc: '10ダメージを与える' },
 };
 
 const STARTER_DECK = [
@@ -233,6 +235,32 @@ const REWARD_POOL = [
   'bash', 'iron_wave', 'double_strike', 'shield_bash', 'quick_slash', 'strike', 'defend',
   'flame_slash', 'guard_up', 'triple_jab', 'brace', 'finishing_blow',
 ];
+
+// 報酬画面での星ランク別の抽選重み。星3(強力なカード)はだいぶ出にくくする。
+const REWARD_STAR_WEIGHTS = { 1: 0.55, 2: 0.35, 3: 0.10 };
+function pickWeightedRewardCards(pool, n) {
+  const chosen = [];
+  const usedIds = new Set();
+  let guard = 0;
+  while (chosen.length < n && guard++ < 200) {
+    const r = Math.random();
+    let star;
+    if (r < REWARD_STAR_WEIGHTS[1]) star = 1;
+    else if (r < REWARD_STAR_WEIGHTS[1] + REWARD_STAR_WEIGHTS[2]) star = 2;
+    else star = 3;
+    const candidates = pool.filter((id) => CARD_LIBRARY[id].star === star && !usedIds.has(id));
+    if (candidates.length === 0) continue;
+    const pick = choice(candidates);
+    chosen.push(pick);
+    usedIds.add(pick);
+  }
+  // 星の巡り合わせが悪く既定回数で埋まらなかった場合、残りの候補から均等に補充する。
+  if (chosen.length < n) {
+    const remaining = shuffleArray(pool.filter((id) => !usedIds.has(id)));
+    while (chosen.length < n && remaining.length > 0) chosen.push(remaining.shift());
+  }
+  return chosen;
+}
 
 const MAX_FLOOR = 100;
 const BUFF_FLOOR_INTERVAL = 10;
@@ -508,8 +536,10 @@ function buildCardElement(cardId) {
   const div = document.createElement('div');
   div.className = `card ${card.type}`;
   div.dataset.cardId = cardId;
+  const stars = '★'.repeat(card.star) + '☆'.repeat(3 - card.star);
   div.innerHTML =
     `<div class="cost">${card.cost}</div>` +
+    `<div class="cardStars">${stars}</div>` +
     `<div class="cardName">${card.name}</div>` +
     `<div class="cardDesc">${card.desc}</div>`;
   return div;
@@ -576,7 +606,7 @@ function renderRewardPicks() {
 
   const container = document.getElementById('rewardCards');
   container.innerHTML = '';
-  const picks = pickRandomUnique(REWARD_POOL, 3);
+  const picks = pickWeightedRewardCards(REWARD_POOL, 3);
   picks.forEach((cardId) => {
     const div = buildCardElement(cardId);
     div.addEventListener('pointerdown', (e) => {
