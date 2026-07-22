@@ -119,31 +119,46 @@ function flashHit(elementId, lethal) {
 
 // ---- ボスの予告(intent)演出 ----
 // ダメージ演出(hitFlash/playHitSound)とは異なる、「通知」として読める
-// サイン波の二音ビープ + 控えめな色フラッシュ。攻撃/溜め/防御の種別は
-// 問わず共通の合図とする(種別ごとの音色分けは将来の拡張課題)。
+// 二音ビープ + 控えめな色フラッシュ。actionTypeごとに音色/色を変え、
+// 溜め(charge=本当に痛い/警戒)と防御(guard=無傷/安心)を聞き分け・
+// 見分けられるようにする。attackは既存の中立トーンのまま据え置き。
+const INTENT_ALERT_CLASSES = ['intentAlert', 'intentAlert--danger', 'intentAlert--safe'];
 function clearIntentAlert() {
   // newGame/backToMenuでのリセット時に、保留中の予告ビープ/パルスが
   // メニューやタイトル画面に戻った後で鳴ってしまわないよう破棄する
   // (clearEndGameStingと同じ方針)。
   clearTimersByPrefix('intentAlert');
   const el = document.getElementById('battleEnemyIntent');
-  if (el) el.classList.remove('intentAlert');
+  if (el) el.classList.remove(...INTENT_ALERT_CLASSES);
 }
-function playIntentAlertSound() {
-  playBeep(330, 0.08, 'sine');
-  scheduleTimer('intentAlert:sound2', () => playBeep(494, 0.12, 'sine'), 90);
+function playIntentAlertSound(actionType) {
+  if (actionType === 'charge') {
+    // 溜め(次は2倍ダメージ): 鋭く高い矩形波の二音で警戒を煽る
+    playBeep(660, 0.07, 'square');
+    scheduleTimer('intentAlert:sound2', () => playBeep(880, 0.1, 'square'), 70);
+  } else if (actionType === 'guard') {
+    // 防御(与ダメージ65%減): 低く落ち着いたサイン波の下降二音
+    playBeep(262, 0.12, 'sine');
+    scheduleTimer('intentAlert:sound2', () => playBeep(196, 0.16, 'sine'), 110);
+  } else {
+    // 攻撃: これまでどおりの中立トーン
+    playBeep(330, 0.08, 'sine');
+    scheduleTimer('intentAlert:sound2', () => playBeep(494, 0.12, 'sine'), 90);
+  }
 }
-function announceIntent() {
+function announceIntent(actionType) {
   const el = document.getElementById('battleEnemyIntent');
   if (!el) return;
-  el.classList.remove('intentAlert');
+  el.classList.remove(...INTENT_ALERT_CLASSES);
   // 強制リフロー: アニメーションを連続予告時にも再トリガーできるようにする
   void el.offsetWidth;
   el.classList.add('intentAlert');
-  scheduleTimer('intentAlert:pulse', () => el.classList.remove('intentAlert'), 400);
+  if (actionType === 'charge') el.classList.add('intentAlert--danger');
+  else if (actionType === 'guard') el.classList.add('intentAlert--safe');
+  scheduleTimer('intentAlert:pulse', () => el.classList.remove(...INTENT_ALERT_CLASSES), 400);
   // ボスの攻撃ターンではflashHitのヒット音(0.1秒)が同じ瞬間に鳴るため、
   // それが鳴り終わってから予告音を鳴らして音が濁らないようにする。
-  scheduleTimer('intentAlert:soundStart', () => playIntentAlertSound(), 120);
+  scheduleTimer('intentAlert:soundStart', () => playIntentAlertSound(actionType), 120);
 }
 
 // ---- 難易度定義 ----
@@ -456,7 +471,7 @@ function enemyBattleAttack() {
     // 次ターンの行動をここで抽選し、次に見せるintentと実際の解決を一致させる
     rollBossAction(enemy);
     // プレイヤーがこの攻撃で倒れた場合、次のintentを予告する意味がないので鳴らさない
-    if (state.player.hp > 0) announceIntent();
+    if (state.player.hp > 0) announceIntent(enemy.actionType);
   }
 
   if (state.player.hp <= 0) {
