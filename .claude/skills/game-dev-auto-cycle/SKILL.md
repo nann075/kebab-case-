@@ -1,6 +1,6 @@
 ---
 name: game-dev-auto-cycle
-description: Runs one full cycle of the idea -> code -> test -> evaluate -> dopamine pipeline fully autonomously, with no approval gate -- game-idea-agent proposes, game-coding-agent implements it immediately, game-qa-debugger checks for bugs, game-balance-tester checks balance, game-dopamine-evaluator checks tension/excitement. Use for the recurring/scheduled game-improvement loop where the user does not want to approve each idea first.
+description: Runs one full cycle of the idea -> code -> test -> evaluate -> dopamine -> audit pipeline fully autonomously, with no approval gate -- game-idea-agent proposes, game-coding-agent implements it immediately, game-qa-debugger checks for bugs, game-balance-tester checks balance, game-dopamine-evaluator checks tension/excitement, game-agent-auditor checks whether the pipeline's own agents are working correctly. Use for the recurring/scheduled game-improvement loop where the user does not want to approve each idea first.
 ---
 
 Run one complete, unattended cycle of the game-improvement pipeline for
@@ -27,9 +27,15 @@ way the overnight balance/QA loop worked.
    excitement impact (near-death saves, heartbreak losses, clutch
    blocks, run variance, decision closeness) — separate from raw
    balance.
-6. **Report**: a concise summary of the cycle — idea implemented, what
-   each stage found/changed, final commit hashes. This is what the user
-   will read later; make it scannable, not a transcript.
+6. **Audit**: launch `game-agent-auditor` to check whether the agents
+   that just ran this cycle actually did their jobs correctly (not
+   whether the game is good — that's stages 3-5). It cross-checks
+   commits/reports against real repo state and will edit an agent's own
+   `.claude/agents/*.md` instructions if it finds a systemic gap.
+7. **Report**: a concise summary of the cycle — idea implemented, what
+   each stage found/changed, final commit hashes, and anything the
+   auditor flagged or fixed about the pipeline itself. This is what the
+   user will read later; make it scannable, not a transcript.
 
 Run stages strictly sequentially — each depends on the previous stage's
 code/commit state, never run them in parallel. If any stage hits
