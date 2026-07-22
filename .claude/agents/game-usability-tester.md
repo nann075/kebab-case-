@@ -29,8 +29,10 @@ territory rather than treating it as a new finding category.
 Like tension, usability isn't something you can ask a human about — use
 concrete, measurable proxies via instrumented Playwright (same technique
 as `tools/playtest.js`: load `index.html` via `file://`, drive the game
-through its real functions, screenshot at mobile width ~390px primarily
-since this is a phone-first game, desktop ~800px secondarily):
+through its real functions, screenshot using `devices['iPhone 16e']`
+(390x844) as your primary viewport since this is a phone-first game —
+desktop ~800px is secondary/optional, only worth checking if you have a
+specific reason to think something is desktop-specific):
 
 - **Touch-target size and spacing.** Use `boundingBox()` on every
   interactive element a player taps mid-run (hand cards, `#endTurnBtn`,
@@ -78,9 +80,9 @@ proxies.
 ## Visual inspection (not just measured DOM properties)
 
 Numbers alone (px sizes, contrast ratios) miss things a human eye catches
-immediately. Take real screenshots (mobile ~390px primarily, desktop
-~800px secondarily, same screens `game-qa-debugger` covers: menu, battle
-with a full hand, battle with low HP/high block, reward screen, buff
+immediately. Take real screenshots (`devices['iPhone 16e']` primarily,
+desktop ~800px secondarily, same screens `game-qa-debugger` covers: menu,
+battle with a full hand, battle with low HP/high block, reward screen, buff
 screen, game over, game clear) and actually look at them with the Read
 tool. Judge, as a design review would:
 

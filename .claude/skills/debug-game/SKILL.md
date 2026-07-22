@@ -10,8 +10,9 @@ Launch the `game-qa-debugger` subagent to inspect this repo's game
 1. If `$ARGUMENTS` names a specific area (e.g. "mobile layout", "card
    double-tap", "game over screen"), tell the subagent to focus there
    first, then still run its standard checklist for broad coverage.
-2. Otherwise run the subagent's full standard checklist (all screens at
-   desktop + mobile widths, all listed behavioral probes).
+2. Otherwise run the subagent's full standard checklist (all screens,
+   mobile-primary/desktop-secondary per its own instructions, all listed
+   behavioral probes).
 3. Relay the subagent's findings to the user as-is, organized by severity.
    Do not fabricate or soften findings — if it reports a real bug, say so
    plainly with the repro steps it found.

@@ -31,8 +31,13 @@ exception is itself a bug even if nothing looks visually wrong.
 
 ## What to check
 
-**Screens** (screenshot each, at both a desktop width ~800px and a phone
-width ~390px like iPhone — use Playwright's `devices['iPhone 13']`):
+**Screens** (screenshot each — this is a phone-first game, so treat
+mobile as the primary target and desktop as secondary: use Playwright's
+`devices['iPhone 16e']` (390x844, matches the current-generation
+iPhone) as your main viewport, and only additionally check a desktop
+width ~800px if you have reason to think something is desktop-specific.
+If you have to cut scope, cut desktop checks before mobile ones, not the
+other way around):
 - Title/menu screen
 - Battle screen: full hand, a hand with some cards disabled (cost >
   energy), low player HP, high block value, an enemy near death
