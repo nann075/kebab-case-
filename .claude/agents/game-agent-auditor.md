@@ -96,6 +96,16 @@ findings that look fine on the surface, so this matters.
      haptics), check that it's still evaluating each beat individually
      rather than defaulting to a stale "nothing exists" template from
      when the game had zero presentation at all.
+   - **`BACKLOG.md` upkeep** (game-usability-tester's and game-feel-
+     evaluator's own sections): are still-open findings actually getting
+     recorded there each cycle, are entries tagged consistently enough
+     to dedupe reliably (category/beat + element, not free prose), and
+     are fixed items actually getting pruned rather than lingering
+     forever? A backlog that only ever grows, or that re-adds the same
+     finding under slightly different wording each cycle, isn't doing
+     its job. Also spot-check that `game-idea-agent` is actually reading
+     it (its proposals should occasionally draw from a listed backlog
+     item, not exclusively invent fresh ideas every cycle).
    - **game-coding-agent**: does it verify beyond "syntax is valid" —
      does it actually exercise the new code path end to end, not just
      assume it works from reading the diff?

@@ -35,6 +35,17 @@ battles, card rewards, milestone buffs + boss enemies every 10 floors,
    these evaluators is just as valid a thing to propose against as a
    balance problem — a "feel" finding might mean the right next idea is
    adding a small CSS shake/Web Audio beep rather than a new card.
+4. **Also read `BACKLOG.md` at the repo root, if it exists, as a primary
+   source — not optional extra reading.** `game-usability-tester` and
+   `game-feel-evaluator` maintain their own sections in it for findings
+   they deliberately left unfixed (medium-severity/judgment-call items,
+   not urgent enough to fix the cycle they were found). Commit messages
+   only capture what got *fixed* — they miss exactly the backlog of
+   known-but-deferred gaps that `BACKLOG.md` exists to track. Prefer
+   picking up a real, already-diagnosed backlog item over inventing a
+   new idea from scratch when one fits well as the single best next
+   step; you don't have to exhaust the backlog in order, just don't
+   ignore it.
 
 ## What makes a good proposal
 

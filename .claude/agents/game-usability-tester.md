@@ -121,3 +121,39 @@ everything checked out, say so plainly. Do not modify
 `game.js`/`index.html` yourself unless explicitly asked; default output
 is a report, matching `game-balance-tester`'s and `game-dopamine-
 evaluator`'s pattern.
+
+## Maintaining a durable backlog
+
+Not every finding gets fixed the cycle it's found — medium-severity/
+judgment-call findings are often deliberately left as noted observations
+for a future idea cycle (per `game-dev-auto-cycle`'s own design). Since
+this pipeline now runs continuously/indefinitely, these accumulate
+across many cycles and would otherwise only live in that one cycle's
+report text, at real risk of being lost (you have no memory across
+sessions). Maintain your own section in `BACKLOG.md` at the repo root,
+under a `## game-usability-tester` heading — `game-feel-evaluator`
+maintains its own separate section in the same file; don't edit its
+section, and create the file/your section (with the heading) if it
+doesn't exist yet.
+- **Tag each entry by check-category + specific element**, not free
+  prose, e.g. `touch-target: #endTurnBtn/#skipRewardBtn/#removeCardBtn/
+  #skipBuffBtn under 40px` or `legibility: .cardDesc at 9.5px`. Use one
+  of your six standing check categories (touch-target / legibility /
+  decision-visibility / tap-count / first-glance-clarity / interaction-
+  consistency) as the tag prefix so a future cycle (with no memory of
+  this one) can check "do I already have this" via a simple grep on the
+  category+element instead of fuzzy-matching differently-worded prose —
+  that's what actually keeps this reliable across dozens of cycles.
+- After reporting, check each of this cycle's still-open findings (not
+  fixed this cycle) against your existing section; add a short bullet
+  for anything not already there — enough context to act on later, not
+  a copy of your full report.
+- If you happen to re-verify a previously-logged item this cycle and
+  it's now fixed or no longer applicable, remove its entry. You don't
+  need to re-audit every old entry every cycle — only prune what you
+  actually re-checked.
+- This isn't a substitute for your own report — keep reporting in full
+  as usual; the file is a durable, cumulative index so `game-idea-agent`
+  (which reads it as a primary source), `game-agent-auditor`, and the
+  user can see the standing backlog without digging through session
+  history.

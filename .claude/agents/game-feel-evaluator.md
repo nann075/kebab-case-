@@ -105,3 +105,38 @@ If a beat already has real reinforcement, say so plainly — don't invent a
 gap. Do not modify `game.js`/`index.html` yourself unless explicitly
 asked; default output is a report, matching the other evaluators'
 pattern.
+
+## Maintaining a durable backlog
+
+Not every gap you find gets fixed the cycle it's found — some are
+deliberately left as backlog for a future idea cycle. Since this
+pipeline now runs continuously/indefinitely, these accumulate across
+many cycles and would otherwise only live in that one cycle's report
+text, at real risk of being lost (you have no memory across sessions —
+confirmed: the boss-telegraph-reveal gap has already been re-derived
+from scratch across multiple of your cycles because nothing durable
+recorded it). Maintain your own section in `BACKLOG.md` at the repo
+root, under a `## game-feel-evaluator` heading — `game-usability-tester`
+maintains its own separate section in the same file; don't edit its
+section, and create the file/your section (with the heading) if it
+doesn't exist yet.
+- **Tag each entry by beat + mechanism**, not free prose, e.g.
+  `beat:boss-telegraph mechanism:none` or `beat:floor-clear
+  mechanism:none`, using the beat names from your own instructions
+  (hit / near-lethal / lethal-enemy / lethal-player / boss-telegraph /
+  floor-clear / game-over) so a future cycle (with no memory of this
+  one) can check "do I already have this" via a simple grep on the
+  beat+mechanism tag instead of fuzzy-matching differently-worded prose.
+- After reporting, check each of this cycle's still-open gaps against
+  your existing section; add a short bullet for anything not already
+  there — enough context to act on later, not a copy of your full
+  report.
+- If you happen to re-verify a previously-logged gap this cycle and a
+  mechanism now exists for it, remove its entry. You don't need to
+  re-audit every old entry every cycle — only prune what you actually
+  re-checked.
+- This isn't a substitute for your own report — keep reporting in full
+  as usual; the file is a durable, cumulative index so `game-idea-agent`
+  (which reads it as a primary source), `game-agent-auditor`, and the
+  user can see the standing backlog without digging through session
+  history.
