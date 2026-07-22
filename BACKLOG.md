@@ -2,10 +2,11 @@
 
 Durable, cumulative index of findings that evaluators deliberately left
 unfixed (medium-severity / judgment-call items, not urgent enough to fix
-the cycle they were found in). Maintained by `game-usability-tester` and
-`game-feel-evaluator`, each owning their own section below. `game-idea-
-agent` reads this as a primary source when researching what to propose
-next. See each agent's `.claude/agents/*.md` for the maintenance rules.
+the cycle they were found in). Maintained by `game-usability-tester`,
+`game-feel-evaluator`, and `game-content-health-auditor`, each owning
+their own section below. `game-idea-agent` reads this as a primary
+source when researching what to propose next. See each agent's
+`.claude/agents/*.md` for the maintenance rules.
 
 ## game-usability-tester
 

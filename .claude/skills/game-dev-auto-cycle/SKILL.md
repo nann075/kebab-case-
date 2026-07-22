@@ -1,6 +1,6 @@
 ---
 name: game-dev-auto-cycle
-description: Runs one full cycle of the idea -> code -> test -> evaluate -> dopamine -> usability -> feel -> audit pipeline fully autonomously, with no approval gate -- game-idea-agent proposes, game-coding-agent implements it immediately, game-qa-debugger checks for bugs, game-balance-tester checks balance, game-dopamine-evaluator checks tension/excitement, game-usability-tester checks ease-of-use and visual design (every cycle, including image-based screenshot review), game-feel-evaluator checks presentation/juice (sound, pacing, motion, haptics at dramatic beats), game-agent-auditor checks whether the pipeline's own agents are working correctly. Use for the recurring/scheduled game-improvement loop where the user does not want to approve each idea first.
+description: Runs one full cycle of the idea -> code -> test -> evaluate -> dopamine -> usability -> feel -> content-health -> audit pipeline fully autonomously, with no approval gate -- game-idea-agent proposes, game-coding-agent implements it immediately, game-qa-debugger checks for bugs, game-balance-tester checks balance, game-dopamine-evaluator checks tension/excitement, game-usability-tester checks ease-of-use and visual design (every cycle, including image-based screenshot review), game-feel-evaluator checks presentation/juice (sound, pacing, motion, haptics at dramatic beats), game-content-health-auditor periodically (self-gated) checks whether the card/buff pool has gone stale and whether balance has silently drifted, game-agent-auditor checks whether the pipeline's own agents are working correctly. Use for the recurring/scheduled game-improvement loop where the user does not want to approve each idea first.
 ---
 
 Run one complete, unattended cycle of the game-improvement pipeline for
@@ -46,17 +46,26 @@ way the overnight balance/QA loop worked.
    `game-usability-tester` (comfort/legibility): a mechanically tense,
    perfectly usable moment can still feel flat with zero presentation
    behind it.
-8. **Audit**: launch `game-agent-auditor` to check whether the agents
+8. **Content health**: launch `game-content-health-auditor` every cycle.
+   It self-gates internally (checks its own `last-checked` marker in
+   `BACKLOG.md` and skips the heavy work if it ran recently, roughly
+   every ~3 hours of real activity) — the orchestrator always launches
+   it, the agent itself decides whether to do a full check or a one-line
+   skip. This is the only stage watching two things nobody else does
+   over time: whether the card/buff pool keeps growing (not just being
+   polished) across many cycles, and whether balance has silently
+   drifted independent of any single cycle's diff.
+9. **Audit**: launch `game-agent-auditor` to check whether the agents
    that just ran this cycle actually did their jobs correctly (not
-   whether the game is good — that's stages 3-7). It cross-checks
+   whether the game is good — that's stages 3-8). It cross-checks
    commits/reports against real repo state and will edit an agent's own
    `.claude/agents/*.md` instructions if it finds a systemic gap.
-9. **Report**: a concise summary of the cycle — idea implemented, what
+10. **Report**: a concise summary of the cycle — idea implemented, what
    each stage found/changed (including usability's and feel's
    findings/suggestions), final commit hashes, and anything the auditor
    flagged or fixed about the pipeline itself. This is what the user will
    read later; make it scannable, not a transcript.
-10. **Schedule the next cycle**: this loop runs back-to-back as each
+11. **Schedule the next cycle**: this loop runs back-to-back as each
     cycle finishes, not on a fixed clock interval, and it runs
     continuously/indefinitely (24/7/365) by explicit user request — there
     is no daily stop time. Use `create_trigger` to make a **one-shot**
@@ -69,7 +78,7 @@ way the overnight balance/QA loop worked.
     `list_triggers` if unsure), don't create a duplicate. Always do this
     step — the only reason to skip it is an explicit stop instruction
     from the user given this session (see "Stopping the loop" below), or
-    a stage-9-blocking failure per the paragraph below.
+    a stage-blocking failure per the paragraph below.
 
 Run stages strictly sequentially — each depends on the previous stage's
 code/commit state, never run them in parallel. If any stage hits
