@@ -94,6 +94,33 @@ async function playOneRun(page, difficulty, aware) {
       continue;
     }
 
+    if (snap.mode === 'event') {
+      // ランダムイベント(除去 or 複製)。除去は適当に1枚、複製はデッキ内で
+      // 最もスコアの高いカードを選ぶのが合理的。カードが無ければスキップ。
+      await page.evaluate(() => {
+        const cards = Array.from(document.querySelectorAll('#eventCards .card'));
+        if (cards.length === 0) {
+          document.getElementById('skipEventBtn').click();
+          return;
+        }
+        const isRemove = document.getElementById('eventTitle').textContent.includes('除去');
+        let target = cards[0];
+        if (!isRemove) {
+          function scoreCard(c) {
+            const raw = (c.damage || 0) * (c.hits || 1) * 2 + (c.block || 0) * 1.5;
+            return raw / Math.max(c.cost, 0.5);
+          }
+          let bestScore = -Infinity;
+          for (const el of cards) {
+            const s = scoreCard(CARD_LIBRARY[el.dataset.cardId]);
+            if (s > bestScore) { bestScore = s; target = el; }
+          }
+        }
+        target.dispatchEvent(new Event('pointerdown', { bubbles: true, cancelable: true }));
+      });
+      continue;
+    }
+
     const pre = await page.evaluate(() => (
       state.battle && state.mode === 'battle' && state.enemy && state.enemy.alive
         ? { isBoss: state.enemy.isBoss, actionType: state.enemy.actionType, chargeBonus: state.enemy.chargeBonus, floor: state.floor }

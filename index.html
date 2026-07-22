@@ -267,7 +267,7 @@
   .card:active {
     transform: scale(0.96);
   }
-  #battleControls button, #skipRewardBtn, #removeCardBtn, #cancelRemoveBtn, #skipBuffBtn {
+  #battleControls button, #skipRewardBtn, #skipBuffBtn, #skipEventBtn {
     padding: 8px 22px;
     font-size: 14px;
     background: #2a2a2a;
@@ -349,25 +349,6 @@
     display: flex;
     gap: 10px;
   }
-  #removeDeckView {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-  }
-  #removeDeckTitle {
-    font-size: 15px;
-    margin-bottom: 12px;
-    text-align: center;
-    color: #ff8a65;
-  }
-  #removeDeckCards {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-bottom: 16px;
-    max-width: 440px;
-  }
   #buffOverlay {
     position: fixed;
     inset: 0;
@@ -402,6 +383,35 @@
   .card.buff .cardName {
     margin-top: 0;
     color: #ffd54f;
+  }
+  #eventOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 4, 20, 0.96);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #eee;
+    padding: 16px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    z-index: 55;
+  }
+  #eventTitle {
+    font-size: 16px;
+    margin: 12px 0;
+    text-align: center;
+    color: #ce93d8;
+    max-width: 440px;
+  }
+  #eventCards {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 16px;
+    max-width: 440px;
   }
 </style>
 </head>
@@ -467,13 +477,7 @@
   <div id="rewardTitle">勝利！ カードを1枚選んでデッキに加える</div>
   <div id="rewardCards"></div>
   <div id="rewardActions">
-    <button id="removeCardBtn">デッキから1枚除去する</button>
     <button id="skipRewardBtn">スキップ</button>
-  </div>
-  <div id="removeDeckView">
-    <div id="removeDeckTitle">除去するカードを選ぶ</div>
-    <div id="removeDeckCards"></div>
-    <button id="cancelRemoveBtn">戻る</button>
   </div>
 </div>
 
@@ -481,6 +485,12 @@
   <div id="buffTitle">節目のボーナス！ 特別な強化を1つ選ぼう</div>
   <div id="buffCards"></div>
   <button id="skipBuffBtn">スキップ</button>
+</div>
+
+<div id="eventOverlay">
+  <div id="eventTitle"></div>
+  <div id="eventCards"></div>
+  <button id="skipEventBtn">スキップ</button>
 </div>
 
 <script src="game.js"></script>

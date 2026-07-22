@@ -278,9 +278,12 @@ function pickWeightedRewardCards(pool, n) {
   return chosen;
 }
 
-// 報酬画面で「デッキから1枚除去する」を選べる確率。毎回使えると
-// デッキ圧縮が強すぎるため、低確率のランダムイベント扱いにする。
-const REMOVE_CARD_EVENT_CHANCE = 0.25;
+// カード報酬選択の後、次の階に進む前に低確率でランダムイベント
+// (カード除去 or カード複製)を挟む。毎回発生すると強すぎる/邪魔なため
+// 低確率にしている。
+const RANDOM_EVENT_CHANCE = 0.25;
+// ランダムイベント内での内訳: 除去75% / 複製25%。
+const EVENT_REMOVE_CHANCE = 0.75;
 
 const MAX_FLOOR = 100;
 const BUFF_FLOOR_INTERVAL = 10;
@@ -390,6 +393,7 @@ function newGame(difficultyKey) {
   overlay.classList.remove('show');
   document.getElementById('rewardOverlay').style.display = 'none';
   document.getElementById('buffOverlay').style.display = 'none';
+  document.getElementById('eventOverlay').style.display = 'none';
   document.getElementById('menuOverlay').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   startFloor(1);
@@ -641,11 +645,6 @@ function showReward() {
 }
 
 function renderRewardPicks() {
-  document.getElementById('rewardTitle').style.display = '';
-  document.getElementById('rewardCards').style.display = 'flex';
-  document.getElementById('rewardActions').style.display = 'flex';
-  document.getElementById('removeDeckView').style.display = 'none';
-
   const container = document.getElementById('rewardCards');
   container.innerHTML = '';
   const picks = pickWeightedRewardCards(REWARD_POOL, 3);
@@ -661,42 +660,70 @@ function renderRewardPicks() {
     });
     container.appendChild(div);
   });
-
-  // 1枚を切ってしまうと山札が空になり得るため、除去はデッキが2枚以上の時のみ可能にする。
-  // デッキ除去は毎回使えると強すぎるため、ランダムイベントとして低確率でのみ
-  // 出現するようにする。1枚を切ってしまうと山札が空になり得るため、
-  // デッキが2枚以上の時のみ対象。
-  const removeBtn = document.getElementById('removeCardBtn');
-  const canOfferRemove = state.player.deck.length > 1 && Math.random() < REMOVE_CARD_EVENT_CHANCE;
-  removeBtn.style.display = canOfferRemove ? '' : 'none';
-}
-
-function renderRemoveDeckList() {
-  document.getElementById('rewardTitle').style.display = 'none';
-  document.getElementById('rewardCards').style.display = 'none';
-  document.getElementById('rewardActions').style.display = 'none';
-  document.getElementById('removeDeckView').style.display = 'flex';
-
-  const container = document.getElementById('removeDeckCards');
-  container.innerHTML = '';
-  state.player.deck.forEach((cardId, idx) => {
-    const div = buildCardElement(cardId);
-    div.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      if (state.mode !== 'reward' || div.dataset.used) return;
-      div.dataset.used = '1';
-      const removedId = state.player.deck.splice(idx, 1)[0];
-      log(`デッキから「${CARD_LIBRARY[removedId].name}」を除去した`);
-      closeReward();
-    });
-    container.appendChild(div);
-  });
 }
 
 function closeReward() {
   if (state.mode !== 'reward') return;
-  state.mode = 'battle';
   document.getElementById('rewardOverlay').style.display = 'none';
+
+  if (Math.random() < RANDOM_EVENT_CHANCE) {
+    state.mode = 'event';
+    showRandomEvent();
+    return;
+  }
+
+  state.mode = 'battle';
+  startFloor(state.floor + 1);
+}
+
+function showRandomEvent() {
+  // 除去はデッキが2枚以上ないと山札が空になり得るため成立しない。
+  // その場合は複製イベントに差し替える。
+  const canRemove = state.player.deck.length > 1;
+  const isRemove = canRemove && Math.random() < EVENT_REMOVE_CHANCE;
+
+  const overlay = document.getElementById('eventOverlay');
+  const title = document.getElementById('eventTitle');
+  const container = document.getElementById('eventCards');
+  container.innerHTML = '';
+
+  if (isRemove) {
+    title.textContent = '怪しい祭壇を見つけた… カードを1枚捧げて除去できる';
+    state.player.deck.forEach((cardId, idx) => {
+      const div = buildCardElement(cardId);
+      div.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        if (state.mode !== 'event' || div.dataset.used) return;
+        div.dataset.used = '1';
+        const removedId = state.player.deck.splice(idx, 1)[0];
+        log(`デッキから「${CARD_LIBRARY[removedId].name}」を除去した`);
+        closeEvent();
+      });
+      container.appendChild(div);
+    });
+  } else {
+    title.textContent = '不思議な鏡を見つけた… カードを1枚選んで複製できる';
+    state.player.deck.forEach((cardId) => {
+      const div = buildCardElement(cardId);
+      div.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        if (state.mode !== 'event' || div.dataset.used) return;
+        div.dataset.used = '1';
+        state.player.deck.push(cardId);
+        log(`「${CARD_LIBRARY[cardId].name}」を複製してデッキに加えた`);
+        closeEvent();
+      });
+      container.appendChild(div);
+    });
+  }
+
+  overlay.style.display = 'flex';
+}
+
+function closeEvent() {
+  if (state.mode !== 'event') return;
+  state.mode = 'battle';
+  document.getElementById('eventOverlay').style.display = 'none';
   startFloor(state.floor + 1);
 }
 
@@ -741,15 +768,8 @@ function closeBuff() {
 }
 
 document.getElementById('skipRewardBtn').addEventListener('click', closeReward);
-document.getElementById('removeCardBtn').addEventListener('click', () => {
-  if (state.mode !== 'reward') return;
-  renderRemoveDeckList();
-});
-document.getElementById('cancelRemoveBtn').addEventListener('click', () => {
-  if (state.mode !== 'reward') return;
-  renderRewardPicks();
-});
 document.getElementById('skipBuffBtn').addEventListener('click', closeBuff);
+document.getElementById('skipEventBtn').addEventListener('click', closeEvent);
 document.getElementById('endTurnBtn').addEventListener('click', () => {
   if (state.mode === 'battle') endPlayerTurn();
 });
