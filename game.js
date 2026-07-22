@@ -205,7 +205,6 @@ function maybeLevelUp() {
   if (state.killCount % 3 === 0) {
     state.player.level++;
     state.player.maxHp += 11;
-    state.player.hp = Math.min(state.player.maxHp, state.player.hp + 11);
     log(`レベルアップ！ Lv${state.player.level}になった`);
   }
 }
@@ -459,7 +458,6 @@ function closeReward() {
   if (state.mode !== 'reward') return;
   state.mode = 'battle';
   document.getElementById('rewardOverlay').style.display = 'none';
-  state.player.hp = Math.min(state.player.maxHp, state.player.hp + 16);
   startFloor(state.floor + 1);
 }
 
@@ -500,7 +498,6 @@ function closeBuff() {
   state.mode = 'battle';
   document.getElementById('buffOverlay').style.display = 'none';
   renderStats();
-  state.player.hp = Math.min(state.player.maxHp, state.player.hp + 16);
   startFloor(state.floor + 1);
 }
 
