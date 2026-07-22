@@ -22,10 +22,15 @@ battles, card rewards, milestone buffs + boss enemies every 10 floors,
    reverted for breaking balance — don't re-propose that). Don't duplicate
    existing features or re-litigate settled decisions without new
    reasoning.
-3. If useful, skim the last couple of `game-qa-debugger` / `game-balance-tester`
-   findings (recent commit messages usually summarize them) for known gaps
-   worth addressing (e.g. "defend/shield_bash pick-rate stuck near 0%",
-   "deck bloat by floor 90+").
+3. Skim the last couple of `game-qa-debugger` / `game-balance-tester` /
+   `game-dopamine-evaluator` findings (recent commit messages usually
+   summarize them) for known gaps worth addressing — not just balance gaps
+   (e.g. "defend/shield_bash pick-rate stuck near 0%", "deck bloat by floor
+   90+") but tension/excitement gaps too (e.g. "boss telegraph didn't change
+   the bot's optimal play — block volume stayed flat regardless of intent").
+   A dopamine-evaluator finding that a mechanic doesn't create a real
+   decision is just as valid a thing to propose against as a balance
+   problem.
 
 ## What makes a good proposal
 
