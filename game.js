@@ -46,6 +46,30 @@ function clearTimersByPrefix(prefix) {
   });
 }
 
+// ---- 誤タップ防止(オーバーレイ表示直後の入力ガード) ----
+// 報酬/バフ/イベントの各オーバーレイはposition:fixedで画面中央に独立配置
+// されており、直前の戦闘画面(#hand内のカード)のレイアウトとは無関係に
+// カード位置が決まる。そのため「最後の1枚で敵を倒す」→即座に次の
+// オーバーレイが表示される、という遷移が起きた瞬間、敵を倒したタップの
+// 座標にたまたま新しいカードが重なることがある。ここで素早い二度タップ
+// (ダブルタップ)をすると、プレイヤーが選ぶ意図のなかったカードを
+// そのまま確定させてしまう。オーバーレイ表示直後の短い間だけ入力を
+// 無視することで、これを防ぐ。
+// 呼び出し側でevent.isTrustedがtrueの場合(実ユーザー入力/実OS発のタップ)
+// のみガードを適用する。dispatchEvent()で生成した合成イベント(isTrusted:
+// false。tools/playtest.jsのヘッドレスbotなど)は対象外とし、遅延なく即座に
+// 処理する。時間ベースのガードは、間隔を置かずポーリング的に再試行する
+// 呼び出し元(botのタイトなループ等)からは「常に250ms未満の再試行」にしか
+// 見えず、無限に足止めされかねないため。
+const OVERLAY_INPUT_GUARD_MS = 250;
+let overlayInputGuardUntil = 0;
+function armOverlayInputGuard() {
+  overlayInputGuardUntil = Date.now() + OVERLAY_INPUT_GUARD_MS;
+}
+function isOverlayInputGuarded() {
+  return Date.now() < overlayInputGuardUntil;
+}
+
 // ---- ヒット演出 (画面フラッシュ/シェイク + 効果音) ----
 let audioCtx = null;
 function getAudioCtx() {
@@ -703,6 +727,7 @@ function showReward() {
   const overlay = document.getElementById('rewardOverlay');
   renderRewardPicks();
   overlay.style.display = 'flex';
+  armOverlayInputGuard();
 }
 
 function renderRewardPicks() {
@@ -716,7 +741,7 @@ function renderRewardPicks() {
     const div = buildCardElement(cardId);
     div.addEventListener('pointerdown', (e) => {
       e.preventDefault();
-      if (state.mode !== 'reward' || div.dataset.used) return;
+      if ((e.isTrusted && isOverlayInputGuarded()) || state.mode !== 'reward' || div.dataset.used) return;
       div.dataset.used = '1';
       state.player.deck.push(cardId);
       log(`デッキに「${CARD_LIBRARY[cardId].name}」を加えた`);
@@ -757,7 +782,7 @@ function showRandomEvent() {
       const div = buildCardElement(cardId);
       div.addEventListener('pointerdown', (e) => {
         e.preventDefault();
-        if (state.mode !== 'event' || div.dataset.used) return;
+        if ((e.isTrusted && isOverlayInputGuarded()) || state.mode !== 'event' || div.dataset.used) return;
         div.dataset.used = '1';
         const removedId = state.player.deck.splice(idx, 1)[0];
         log(`デッキから「${CARD_LIBRARY[removedId].name}」を除去した`);
@@ -771,7 +796,7 @@ function showRandomEvent() {
       const div = buildCardElement(cardId);
       div.addEventListener('pointerdown', (e) => {
         e.preventDefault();
-        if (state.mode !== 'event' || div.dataset.used) return;
+        if ((e.isTrusted && isOverlayInputGuarded()) || state.mode !== 'event' || div.dataset.used) return;
         div.dataset.used = '1';
         state.player.deck.push(cardId);
         log(`「${CARD_LIBRARY[cardId].name}」を複製してデッキに加えた`);
@@ -782,6 +807,7 @@ function showRandomEvent() {
   }
 
   overlay.style.display = 'flex';
+  armOverlayInputGuard();
 }
 
 function closeEvent() {
@@ -812,7 +838,7 @@ function showBuffChoice() {
     const div = buildBuffElement(buffId);
     div.addEventListener('pointerdown', (e) => {
       e.preventDefault();
-      if (state.mode !== 'buff' || div.dataset.used) return;
+      if ((e.isTrusted && isOverlayInputGuarded()) || state.mode !== 'buff' || div.dataset.used) return;
       div.dataset.used = '1';
       BUFF_LIBRARY[buffId].apply();
       log(`「${BUFF_LIBRARY[buffId].name}」を獲得した！`);
@@ -821,6 +847,7 @@ function showBuffChoice() {
     container.appendChild(div);
   });
   overlay.style.display = 'flex';
+  armOverlayInputGuard();
 }
 
 function closeBuff() {
