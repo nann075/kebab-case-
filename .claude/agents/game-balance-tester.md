@@ -215,3 +215,17 @@ predict `score`:
   balance — that changes the game's goal, not its difficulty.
 - Report in a compact table or bullet list; don't paste the full
   `RAW_JSON` array into your final report, summarize it.
+- **Never background a `playtest.js`/comparison run and wait for it across
+  turns.** This has actually happened and stalled a real cycle: a run was
+  launched via a detached/backgrounded shell script (e.g. a loop over
+  several `BUFF_FORCE` variants piped to log files) with the intent of
+  checking back later, but the agent's own turn ended before the script
+  finished, and — unlike the orchestrator session — a subagent does not
+  get resumed by a background-task completion notification, so the run
+  sat finished-but-unread until the orchestrator had to notice the stall,
+  inspect the stray process/log files by hand, and finish the analysis
+  itself. Always run playtest commands in the foreground and wait for
+  them to return before ending your turn, even if that means smaller `n`
+  or fewer comparison arms per invocation than you'd like — a smaller
+  synchronous result you actually report beats a larger one that never
+  gets read.

@@ -83,6 +83,20 @@ it off:
   proposed number — that's exactly the kind of thing the statistical bot
   can't tell you and is valuable on its own.
 
+## Never background a run and wait for it across turns
+
+Playing full runs turn-by-turn via `page.evaluate` is by far the most
+tool-call-intensive job in this pipeline, which can tempt you to launch a
+run via a detached/backgrounded shell process and check back on it later.
+Don't — a subagent does not get resumed by a background-task completion
+notification the way the orchestrator session does, so a backgrounded run
+just stalls silently until the orchestrator notices and has to finish your
+analysis for you by hand (this has actually happened to `game-balance-
+tester` in this pipeline). Keep every run driven synchronously within your
+own turn, even if that means shorter runs or fewer of them than you'd
+otherwise want — per Step 2, "enough to form a real opinion" is the actual
+bar, not a fixed run count.
+
 ## Step 4: update BACKLOG.md
 
 Maintain your own `## game-human-playtester` section, same convention as
