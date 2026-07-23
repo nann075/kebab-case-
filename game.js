@@ -282,7 +282,7 @@ const CARD_LIBRARY = {
   ultimate_slash: { id: 'ultimate_slash', name: 'アルティメットスラッシュ', cost: 3, type: 'attack', damage: 21, star: 3, desc: '21ダメージを与える' },
   fortress: { id: 'fortress', name: 'フォートレス', cost: 3, type: 'skill', block: 26, star: 3, desc: '26ブロックを得る' },
   mist_cut: { id: 'mist_cut', name: 'かすみ斬り', cost: 1, type: 'attack', damage: 3, hits: 2, block: 1, star: 2, desc: '3ダメージを2回与え、1ブロックを得る' },
-  retribution_strike: { id: 'retribution_strike', name: '報復の一撃', cost: 2, type: 'attack', damage: 10, star: 3, desc: '10ダメージを与える(ボスの溜め中は20ダメージ)' },
+  retribution_strike: { id: 'retribution_strike', name: '報復の一撃', cost: 2, type: 'attack', damage: 12, star: 3, desc: '12ダメージを与える(ボスの溜め中は24ダメージ)' },
 };
 
 const STARTER_DECK = [
