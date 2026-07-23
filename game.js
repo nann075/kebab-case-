@@ -185,7 +185,7 @@ function announceIntent(actionType) {
 // ---- 難易度定義 ----
 const DIFFICULTIES = {
   easy: { label: 'かんたん', playerMaxHp: 36, enemyHpMult: 0.865, enemyAtkMult: 0.865 },
-  normal: { label: 'ふつう', playerMaxHp: 33, enemyHpMult: 0.95, enemyAtkMult: 0.93 },
+  normal: { label: 'ふつう', playerMaxHp: 33, enemyHpMult: 0.97, enemyAtkMult: 0.97 },
   hard: { label: 'むずかしい', playerMaxHp: 29, enemyHpMult: 1.16, enemyAtkMult: 1.12 },
 };
 
@@ -242,10 +242,10 @@ const CARD_LIBRARY = {
   defend: { id: 'defend', name: 'ディフェンド', cost: 1, type: 'skill', block: 6, star: 1, desc: '6ブロックを得る' },
   bash: { id: 'bash', name: 'バッシュ', cost: 2, type: 'attack', damage: 12, star: 3, desc: '12ダメージを与える' },
   iron_wave: { id: 'iron_wave', name: 'アイアンウェーブ', cost: 2, type: 'attack', damage: 6, block: 8, star: 3, desc: '6ダメージを与え、8ブロックを得る' },
-  double_strike: { id: 'double_strike', name: 'ダブルストライク', cost: 1, type: 'attack', damage: 4, hits: 2, star: 3, desc: '4ダメージを2回与える' },
+  double_strike: { id: 'double_strike', name: 'ダブルストライク', cost: 1, type: 'attack', damage: 3, hits: 2, block: 3, star: 3, desc: '3ダメージを2回与え、3ブロックを得る' },
   shield_bash: { id: 'shield_bash', name: 'シールドバッシュ', cost: 1, type: 'attack', damage: 3, block: 4, star: 1, desc: '3ダメージを与え、4ブロックを得る' },
   quick_slash: { id: 'quick_slash', name: 'クイックスラッシュ', cost: 0, type: 'attack', damage: 3, star: 3, desc: '3ダメージを与える' },
-  flame_slash: { id: 'flame_slash', name: 'フレイムスラッシュ', cost: 1, type: 'attack', damage: 7, star: 3, desc: '7ダメージを与える' },
+  flame_slash: { id: 'flame_slash', name: 'フレイムスラッシュ', cost: 1, type: 'attack', damage: 8, star: 3, desc: '8ダメージを与える' },
   guard_up: { id: 'guard_up', name: 'ガードアップ', cost: 2, type: 'skill', block: 14, star: 2, desc: '14ブロックを得る' },
   triple_jab: { id: 'triple_jab', name: 'トリプルジャブ', cost: 2, type: 'attack', damage: 3, hits: 3, star: 1, desc: '3ダメージを3回与える' },
   brace: { id: 'brace', name: 'ブレイス', cost: 1, type: 'skill', block: 9, star: 3, desc: '9ブロックを得る' },
@@ -253,7 +253,7 @@ const CARD_LIBRARY = {
   step_back: { id: 'step_back', name: 'ステップバック', cost: 0, type: 'skill', block: 3, star: 2, desc: '3ブロックを得る' },
   riposte: { id: 'riposte', name: 'リポスト', cost: 1, type: 'attack', damage: 4, block: 3, star: 2, desc: '4ダメージを与え、3ブロックを得る' },
   tower_shield: { id: 'tower_shield', name: 'タワーシールド', cost: 2, type: 'skill', block: 12, star: 1, desc: '12ブロックを得る' },
-  critical_sword: { id: 'critical_sword', name: 'クリティカルソード', cost: 2, type: 'attack', damage: 13, star: 3, desc: '13ダメージを与える' },
+  critical_sword: { id: 'critical_sword', name: 'クリティカルソード', cost: 2, type: 'attack', damage: 10, block: 3, star: 3, desc: '10ダメージを与え、3ブロックを得る' },
   twin_greatsword: { id: 'twin_greatsword', name: '双大剣', cost: 2, type: 'attack', damage: 6, hits: 2, star: 3, desc: '6ダメージを2回与える' },
   ultimate_slash: { id: 'ultimate_slash', name: 'アルティメットスラッシュ', cost: 3, type: 'attack', damage: 21, star: 3, desc: '21ダメージを与える' },
   fortress: { id: 'fortress', name: 'フォートレス', cost: 3, type: 'skill', block: 26, star: 3, desc: '26ブロックを得る' },
