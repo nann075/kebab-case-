@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>カードバトルローグライク</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #111;
+    color: #ddd;
+    font-family: monospace, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    touch-action: manipulation;
+    overscroll-behavior: none;
+  }
+  h1 {
+    font-size: 18px;
+    margin: 12px 0 4px;
+  }
+  #app {
+    width: 100%;
+    max-width: 480px;
+    padding: 8px 12px 12px;
+    box-sizing: border-box;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+  }
+  #menuOverlay {
+    position: fixed;
+    inset: 0;
+    background: #111;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 16px;
+    box-sizing: border-box;
+    z-index: 80;
+  }
+  #menuOverlay h1 {
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+  #menuOverlay p {
+    color: #999;
+    font-size: 13px;
+    margin: 0 0 22px;
+  }
+  #difficultyButtons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 280px;
+  }
+  .diffBtn {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px;
+    background: #1b1b1b;
+    border: 2px solid #555;
+    border-radius: 10px;
+    color: #eee;
+    cursor: pointer;
+    touch-action: manipulation;
+    font-family: inherit;
+  }
+  .diffBtn:active {
+    background: #2a2a2a;
+  }
+  .diffBtn[data-diff="easy"] { border-color: #66bb6a; }
+  .diffBtn[data-diff="normal"] { border-color: #4fc3f7; }
+  .diffBtn[data-diff="hard"] { border-color: #e05555; }
+  .diffName {
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .diffDesc {
+    font-size: 11px;
+    color: #999;
+  }
+  #stats {
+    width: 100%;
+    background: #1b1b1b;
+    border: 1px solid #444;
+    padding: 6px 8px;
+    margin-bottom: 8px;
+    line-height: 1.4;
+    font-size: 13px;
+    box-sizing: border-box;
+  }
+  #stats span {
+    color: #7fdbff;
+  }
+  #battleEnemy {
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  #battleEnemyName {
+    font-size: 16px;
+    margin-bottom: 2px;
+  }
+  .hpBarOuter {
+    width: 200px;
+    max-width: 80vw;
+    height: 12px;
+    background: #333;
+    border: 1px solid #555;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 2px auto;
+  }
+  .hpBarInner {
+    height: 100%;
+    background: #e05555;
+  }
+  .hpBarOuter--player {
+    width: 80px;
+    max-width: 100%;
+    height: 8px;
+    margin: 3px 0 0;
+  }
+  #battlePlayerHpBar.hpBarInner {
+    background: #7fdbff;
+  }
+  #battlePlayerHpBar.hpBarInner.hpTier--warning {
+    background: #ffb74d;
+  }
+  #battlePlayerHpBar.hpBarInner.hpTier--danger {
+    background: #e05555;
+  }
+  #battleEnemyIntent {
+    color: #ffb74d;
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  #battlePlayer {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    background: #1b1b1b;
+    border: 1px solid #444;
+    padding: 6px 8px;
+    box-sizing: border-box;
+  }
+  #battlePlayer span {
+    color: #7fdbff;
+  }
+  @keyframes hitShake {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(2px); }
+    100% { transform: translateX(0); }
+  }
+  #battleEnemy.hitFlash,
+  #battlePlayer.hitFlash {
+    animation: hitShake 0.3s ease-in-out;
+    filter: brightness(1.6) drop-shadow(0 0 6px #ff4444);
+  }
+  @keyframes hitShakeHeavy {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(-9px); }
+    40% { transform: translateX(7px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(3px); }
+    100% { transform: translateX(0); }
+  }
+  /* 瀕死(nearLethal)/致死(lethal)ダメージ用の強調演出。通常のhitFlashより
+     シェイク振幅と明るさを大きくし、「あと少しで死んでいた」を強調する。 */
+  #battleEnemy.hitFlash.hitFlash--heavy,
+  #battlePlayer.hitFlash.hitFlash--heavy {
+    animation: hitShakeHeavy 0.3s ease-in-out;
+    filter: brightness(2.0) drop-shadow(0 0 9px #ff4444);
+  }
+  @keyframes intentPulse {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+  #battleEnemyIntent.intentAlert {
+    animation: intentPulse 0.4s ease-in-out;
+    color: #fff59d;
+    text-shadow: 0 0 6px #ffe082;
+  }
+  #battleEnemyIntent.intentAlert--danger {
+    color: #ff6e40;
+    text-shadow: 0 0 8px #ff3d00;
+  }
+  #battleEnemyIntent.intentAlert--safe {
+    color: #80d8ff;
+    text-shadow: 0 0 8px #40c4ff;
+  }
+  /* パルス演出(intentAlert系、400msで消える)とは独立して、ボスの意図が
+     有効な間ずっと保持する常時カラーティント。配色はintentAlert--danger/
+     --safeと揃え、視覚言語の一貫性を保つ(グローのtext-shadowはパルス時の
+     強調専用として、常時状態では色のみ)。 */
+  #battleEnemyIntent.intentTier--danger {
+    color: #ff6e40;
+    font-weight: bold;
+  }
+  #battleEnemyIntent.intentTier--safe {
+    color: #80d8ff;
+  }
+  #log {
+    width: 100%;
+    height: 56px;
+    overflow-y: auto;
+    background: #1b1b1b;
+    border: 1px solid #444;
+    font-size: 11px;
+    padding: 5px;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+  }
+  #log div:last-child {
+    color: #fff;
+  }
+  #hand {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: flex-start;
+    align-items: flex-start;
+    /* Reserve room for a full 2-row hand so playing/discarding cards never
+       shifts the End Turn button underneath a finger mid-tap. */
+    min-height: 214px;
+    margin-bottom: 8px;
+  }
+  .card {
+    box-sizing: border-box;
+    width: 84px;
+    height: 104px;
+    background: #22252b;
+    border: 2px solid #666;
+    border-radius: 9px;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    touch-action: manipulation;
+    position: relative;
+    user-select: none;
+  }
+  .card.attack { border-color: #e05555; }
+  .card.skill { border-color: #4fc3f7; }
+  .card .cost {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    background: #333;
+    border-radius: 50%;
+    width: 19px;
+    height: 19px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+  }
+  .card .cardStars {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 8.5px;
+    color: #ffd54f;
+    letter-spacing: 1px;
+  }
+  .card .cardName {
+    font-size: 11.5px;
+    margin-top: 18px;
+    font-weight: bold;
+  }
+  .card .cardDesc {
+    font-size: 9.5px;
+    color: #bbb;
+    margin-top: 4px;
+  }
+  .card.disabled {
+    opacity: 0.4;
+  }
+  .card:active {
+    transform: scale(0.96);
+  }
+  #battleControls button, #skipRewardBtn, #skipBuffBtn, #skipEventBtn {
+    padding: 8px 22px;
+    font-size: 14px;
+    background: #2a2a2a;
+    color: #eee;
+    border: 1px solid #555;
+    border-radius: 8px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  #help {
+    font-size: 11px;
+    color: #888;
+    margin-top: 4px;
+    text-align: center;
+  }
+  #overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: #fff;
+    z-index: 60;
+    opacity: 0;
+  }
+  @keyframes overlayFadeIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  #overlay.show {
+    animation: overlayFadeIn 0.35s ease-out forwards;
+  }
+  #overlayText {
+    padding: 0 20px;
+    max-width: 440px;
+    box-sizing: border-box;
+    text-align: center;
+  }
+  #overlayButtons {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  #overlay button {
+    padding: 8px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  #rewardOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 8, 16, 0.96);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #eee;
+    padding: 16px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    z-index: 50;
+  }
+  #rewardTitle {
+    font-size: 16px;
+    margin: 12px 0;
+    text-align: center;
+  }
+  #rewardCards {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  #rewardActions {
+    display: flex;
+    gap: 10px;
+  }
+  #buffOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 14, 2, 0.96);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #eee;
+    padding: 16px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    z-index: 55;
+  }
+  #buffTitle {
+    font-size: 17px;
+    margin: 12px 0;
+    text-align: center;
+    color: #ffd54f;
+  }
+  #buffCards {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .card.buff {
+    border-color: #ffd54f;
+    justify-content: center;
+  }
+  .card.buff .cardName {
+    margin-top: 0;
+    color: #ffd54f;
+  }
+  #eventOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 4, 20, 0.96);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #eee;
+    padding: 16px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    z-index: 55;
+  }
+  #eventTitle {
+    font-size: 16px;
+    margin: 12px 0;
+    text-align: center;
+    color: #ce93d8;
+    max-width: 440px;
+  }
+  #eventCards {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 16px;
+    max-width: 440px;
+  }
+</style>
+</head>
+<body>
+<div id="menuOverlay">
+  <h1>カードバトルローグライク</h1>
+  <p>難易度を選んでスタート</p>
+  <div id="difficultyButtons">
+    <button class="diffBtn" data-diff="easy">
+      <span class="diffName">かんたん</span>
+      <span class="diffDesc">HP多め・敵弱め</span>
+    </button>
+    <button class="diffBtn" data-diff="normal">
+      <span class="diffName">ふつう</span>
+      <span class="diffDesc">標準バランス</span>
+    </button>
+    <button class="diffBtn" data-diff="hard">
+      <span class="diffName">むずかしい</span>
+      <span class="diffDesc">HP少なめ・敵強め</span>
+    </button>
+  </div>
+</div>
+
+<div id="app">
+  <div id="stats"></div>
+
+  <div id="battleEnemy">
+    <div id="battleEnemyName"></div>
+    <div class="hpBarOuter"><div id="battleEnemyHpBar" class="hpBarInner"></div></div>
+    <div id="battleEnemyHpText"></div>
+    <div id="battleEnemyIntent"></div>
+  </div>
+
+  <div id="battlePlayer">
+    <div>
+      HP: <span id="battlePlayerHp"></span>
+      <div class="hpBarOuter hpBarOuter--player"><div id="battlePlayerHpBar" class="hpBarInner"></div></div>
+    </div>
+    <div>ブロック: <span id="battlePlayerBlock"></span></div>
+    <div>エネルギー: <span id="battlePlayerEnergy"></span></div>
+  </div>
+
+  <div id="log"></div>
+
+  <div id="hand"></div>
+
+  <div id="battleControls">
+    <button id="endTurnBtn">ターン終了</button>
+  </div>
+
+  <div id="help">カードをタップして使用、敵を倒すと次の階層へ</div>
+</div>
+
+<div id="overlay">
+  <div id="overlayText" style="font-size: 24px;"></div>
+  <div id="overlayButtons">
+    <button id="restartBtn">もう一度</button>
+    <button id="titleBtn">タイトルへ戻る</button>
+  </div>
+</div>
+
+<div id="rewardOverlay">
+  <div id="rewardTitle">勝利！ カードを1枚選んでデッキに加える</div>
+  <div id="rewardCards"></div>
+  <div id="rewardActions">
+    <button id="skipRewardBtn">スキップ</button>
+  </div>
+</div>
+
+<div id="buffOverlay">
+  <div id="buffTitle">節目のボーナス！ 特別な強化を1つ選ぼう</div>
+  <div id="buffCards"></div>
+  <button id="skipBuffBtn">スキップ</button>
+</div>
+
+<div id="eventOverlay">
+  <div id="eventTitle"></div>
+  <div id="eventCards"></div>
+  <button id="skipEventBtn">スキップ</button>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>

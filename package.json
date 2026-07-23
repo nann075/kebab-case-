@@ -1,0 +1,10 @@
+{
+  "name": "kebab-case-",
+  "private": true,
+  "scripts": {
+    "playtest": "node tools/playtest.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.1"
+  }
+}
