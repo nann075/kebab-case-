@@ -275,6 +275,13 @@ const REWARD_POOL = [
 
 // 報酬画面での星ランク別の抽選重み。星3(強力なカード)はだいぶ出にくくする。
 const REWARD_STAR_WEIGHTS = { 1: 0.55, 2: 0.35, 3: 0.10 };
+
+// 終盤(REWARD_PURE_STAT_CUTOFF_FLOOR以降)ではriposte/iron_wave/mist_cut等の
+// ハイブリッドstar1カードが出揃い、strike/defend/tower_shieldのような
+// 純ステータス型star1カードは常に下位互換になってしまう。報酬画面3枚の
+// 実質的な選択肢を削るため、当該階以降はこれらを候補から除外する。
+const REWARD_PURE_STAT_CUTOFF_FLOOR = 15;
+const REWARD_PURE_STAT_CARD_IDS = ['strike', 'defend', 'tower_shield'];
 function pickWeightedRewardCards(pool, n) {
   const chosen = [];
   const usedIds = new Set();
@@ -701,7 +708,10 @@ function showReward() {
 function renderRewardPicks() {
   const container = document.getElementById('rewardCards');
   container.innerHTML = '';
-  const picks = pickWeightedRewardCards(REWARD_POOL, 3);
+  const rewardPool = state.floor >= REWARD_PURE_STAT_CUTOFF_FLOOR
+    ? REWARD_POOL.filter((id) => !REWARD_PURE_STAT_CARD_IDS.includes(id))
+    : REWARD_POOL;
+  const picks = pickWeightedRewardCards(rewardPool, 3);
   picks.forEach((cardId) => {
     const div = buildCardElement(cardId);
     div.addEventListener('pointerdown', (e) => {
