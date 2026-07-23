@@ -129,7 +129,7 @@ function clearIntentAlert() {
   // (clearEndGameStingと同じ方針)。
   clearTimersByPrefix('intentAlert');
   const el = document.getElementById('battleEnemyIntent');
-  if (el) el.classList.remove(...INTENT_ALERT_CLASSES);
+  if (el) el.classList.remove(...INTENT_ALERT_CLASSES, ...INTENT_TIER_CLASSES);
 }
 function playIntentAlertSound(actionType) {
   if (actionType === 'charge') {
@@ -617,6 +617,19 @@ function getEnemyIntentText(enemy) {
   return `次の攻撃: ${enemy.atk}ダメージ`;
 }
 
+// ボスの現在の意図(actionType)に応じて#battleEnemyIntentの常時色を返す。
+// パルス演出(intentAlert系クラス、400msで消える)とは独立して、意図が
+// 有効な間ずっと保持される。溜め中/次が2倍ダメージ攻撃は危険(赤)、
+// 防御態勢は安全(青)、それ以外(素の攻撃)は基準色のまま(クラスなし)。
+const INTENT_TIER_CLASSES = ['intentTier--danger', 'intentTier--safe'];
+function getEnemyIntentTierClass(enemy) {
+  if (!enemy.isBoss) return null;
+  if (enemy.actionType === 'charge') return 'intentTier--danger';
+  if (enemy.actionType === 'guard') return 'intentTier--safe';
+  if (enemy.actionType === 'attack' && enemy.chargeBonus) return 'intentTier--danger';
+  return null;
+}
+
 function renderBattle() {
   const b = state.battle;
   if (!b) return;
@@ -624,7 +637,11 @@ function renderBattle() {
   document.getElementById('battleEnemyName').textContent = state.enemy.name;
   document.getElementById('battleEnemyHpText').textContent = `${Math.max(0, state.enemy.hp)} / ${state.enemy.maxHp}`;
   document.getElementById('battleEnemyHpBar').style.width = `${Math.max(0, state.enemy.hp) / state.enemy.maxHp * 100}%`;
-  document.getElementById('battleEnemyIntent').textContent = getEnemyIntentText(state.enemy);
+  const intentEl = document.getElementById('battleEnemyIntent');
+  intentEl.textContent = getEnemyIntentText(state.enemy);
+  intentEl.classList.remove(...INTENT_TIER_CLASSES);
+  const intentTier = getEnemyIntentTierClass(state.enemy);
+  if (intentTier) intentEl.classList.add(intentTier);
   document.getElementById('battlePlayerHp').textContent = `${Math.max(0, state.player.hp)} / ${state.player.maxHp}`;
   const playerHpPct = Math.max(0, state.player.hp) / state.player.maxHp * 100;
   const playerHpBar = document.getElementById('battlePlayerHpBar');

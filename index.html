@@ -185,6 +185,16 @@
     color: #80d8ff;
     text-shadow: 0 0 8px #40c4ff;
   }
+  /* パルス演出(intentAlert系、400msで消える)とは独立して、ボスの意図が
+     有効な間ずっと保持する常時カラーティント。配色はintentAlert--danger/
+     --safeと揃え、視覚言語の一貫性を保つ(グローのtext-shadowはパルス時の
+     強調専用として、常時状態では色のみ)。 */
+  #battleEnemyIntent.intentTier--danger {
+    color: #ff6e40;
+  }
+  #battleEnemyIntent.intentTier--safe {
+    color: #80d8ff;
+  }
   #log {
     width: 100%;
     height: 56px;
