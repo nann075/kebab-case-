@@ -316,7 +316,19 @@ function pickWeightedRewardCards(pool, n) {
     if (r < REWARD_STAR_WEIGHTS[1]) star = 1;
     else if (r < REWARD_STAR_WEIGHTS[1] + REWARD_STAR_WEIGHTS[2]) star = 2;
     else star = 3;
-    const candidates = pool.filter((id) => CARD_LIBRARY[id].star === star && !usedIds.has(id));
+    let candidates = pool.filter((id) => CARD_LIBRARY[id].star === star && !usedIds.has(id));
+    // 対象starの候補が尽きた場合(floor15以降、star1の純ステータス型を
+    // 除外した影響でstar1候補が2枚しかなくなり得る)、完全にランダムな
+    // 再抽選に戻すとstar3の実出現率まで意図せず底上げされてしまう
+    // (55/35/10のはずが49.3/39.3/11.3になっていた不具合)。
+    // 不足分は必ずstar2側に寄せ、star3の出現率は据え置く。
+    if (candidates.length === 0) {
+      const fallbackOrder = star === 1 ? [2, 3] : star === 3 ? [2, 1] : [1, 3];
+      for (const fb of fallbackOrder) {
+        candidates = pool.filter((id) => CARD_LIBRARY[id].star === fb && !usedIds.has(id));
+        if (candidates.length > 0) break;
+      }
+    }
     if (candidates.length === 0) continue;
     const pick = choice(candidates);
     chosen.push(pick);
