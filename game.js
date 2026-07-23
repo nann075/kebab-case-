@@ -76,9 +76,13 @@ function playBeep(freq, duration, type) {
   osc.stop(ctx.currentTime + duration);
 }
 
-function playHitSound(lethal) {
-  if (lethal) {
+function playHitSound(severity) {
+  if (severity === 'lethal') {
     playBeep(160, 0.35, 'sawtooth');
+  } else if (severity === 'nearLethal') {
+    // 致死(160Hzのこぎり波)と通常(440Hz矩形波)の中間: 「あと少しで死んでいた」
+    // という緊張感を出すため、少し歪んだ質感の矩形波をやや長めに鳴らす。
+    playBeep(280, 0.2, 'square');
   } else {
     playBeep(440, 0.1, 'square');
   }
@@ -106,15 +110,32 @@ function playEndGameSting(won) {
   });
 }
 
-function flashHit(elementId, lethal) {
+// severity: 'lethal' | 'nearLethal' | 'normal'(省略時)。
+// lethal/nearLethalは通常のチップダメージより強いシェイク/フラッシュ(hitFlash--heavy)
+// と専用の効果音、対応端末でのバイブレーションで「重い一撃」を強調する。
+function flashHit(elementId, severity) {
   const el = document.getElementById(elementId);
   if (!el) return;
-  el.classList.remove('hitFlash');
+  const heavy = severity === 'lethal' || severity === 'nearLethal';
+  el.classList.remove('hitFlash', 'hitFlash--heavy');
   // 強制リフロー: アニメーションを連続ヒット時にも再トリガーできるようにする
   void el.offsetWidth;
   el.classList.add('hitFlash');
-  scheduleTimer(`hitFlash:${elementId}`, () => el.classList.remove('hitFlash'), 300);
-  playHitSound(lethal);
+  if (heavy) el.classList.add('hitFlash--heavy');
+  scheduleTimer(`hitFlash:${elementId}`, () => el.classList.remove('hitFlash', 'hitFlash--heavy'), 300);
+  playHitSound(severity);
+  if (heavy && navigator.vibrate) {
+    navigator.vibrate(severity === 'lethal' ? [30, 40, 60] : [40]);
+  }
+}
+
+// プレイヤーがダメージを受けた直後のflashHit重症度を判定する。
+// 0以下ならlethal、生存しているが最大HPの20%未満ならnearLethal
+// (「あと少しで死んでいた」を演出面で強調する)、それ以外はnormal。
+function playerHitSeverity() {
+  if (state.player.hp <= 0) return 'lethal';
+  if (state.player.hp / state.player.maxHp < 0.2) return 'nearLethal';
+  return 'normal';
 }
 
 // ---- ボスの予告(intent)演出 ----
@@ -498,12 +519,12 @@ function playCard(index) {
       for (let h = 0; h < hits; h++) {
         const isLast = h === hits - 1;
         scheduleTimer(`hitSeq:${h}`, () => {
-          flashHit('battleEnemy', isLast && lethal);
+          flashHit('battleEnemy', isLast && lethal ? 'lethal' : 'normal');
         }, h * 120);
       }
     } else {
       log(`${card.name}で${state.enemy.name}に${dmg}ダメージ！`);
-      flashHit('battleEnemy', lethal);
+      flashHit('battleEnemy', lethal ? 'lethal' : 'normal');
     }
   }
   if (card.block) {
@@ -538,7 +559,7 @@ function enemyBattleAttack() {
     b.block = Math.max(0, b.block - enemy.atk);
     state.player.hp -= dmg;
     log(`${enemy.name}の攻撃！ ${dmg}ダメージを受けた`);
-    flashHit('battlePlayer', state.player.hp <= 0);
+    flashHit('battlePlayer', playerHitSeverity());
   } else {
     // ボス: 事前に予告(intent)していた行動をそのまま解決する
     if (enemy.actionType === 'charge') {
@@ -556,7 +577,7 @@ function enemyBattleAttack() {
       b.block = Math.max(0, b.block - atk);
       state.player.hp -= dmg;
       log(`${enemy.name}の攻撃！ ${dmg}ダメージを受けた`);
-      flashHit('battlePlayer', state.player.hp <= 0);
+      flashHit('battlePlayer', playerHitSeverity());
     }
     // 次ターンの行動をここで抽選し、次に見せるintentと実際の解決を一致させる
     rollBossAction(enemy);

@@ -167,6 +167,21 @@
     animation: hitShake 0.3s ease-in-out;
     filter: brightness(1.6) drop-shadow(0 0 6px #ff4444);
   }
+  @keyframes hitShakeHeavy {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(-9px); }
+    40% { transform: translateX(7px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(3px); }
+    100% { transform: translateX(0); }
+  }
+  /* 瀕死(nearLethal)/致死(lethal)ダメージ用の強調演出。通常のhitFlashより
+     シェイク振幅と明るさを大きくし、「あと少しで死んでいた」を強調する。 */
+  #battleEnemy.hitFlash.hitFlash--heavy,
+  #battlePlayer.hitFlash.hitFlash--heavy {
+    animation: hitShakeHeavy 0.3s ease-in-out;
+    filter: brightness(2.0) drop-shadow(0 0 9px #ff4444);
+  }
   @keyframes intentPulse {
     0% { transform: scale(1); }
     30% { transform: scale(1.12); }
