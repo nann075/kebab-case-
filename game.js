@@ -282,6 +282,7 @@ const CARD_LIBRARY = {
   ultimate_slash: { id: 'ultimate_slash', name: 'アルティメットスラッシュ', cost: 3, type: 'attack', damage: 21, star: 3, desc: '21ダメージを与える' },
   fortress: { id: 'fortress', name: 'フォートレス', cost: 3, type: 'skill', block: 26, star: 3, desc: '26ブロックを得る' },
   mist_cut: { id: 'mist_cut', name: 'かすみ斬り', cost: 1, type: 'attack', damage: 3, hits: 2, block: 1, star: 2, desc: '3ダメージを2回与え、1ブロックを得る' },
+  retribution_strike: { id: 'retribution_strike', name: '報復の一撃', cost: 2, type: 'attack', damage: 8, star: 3, desc: '8ダメージを与える(ボスの溜め中は16ダメージ)' },
 };
 
 const STARTER_DECK = [
@@ -294,7 +295,7 @@ const REWARD_POOL = [
   'bash', 'iron_wave', 'double_strike', 'shield_bash', 'quick_slash', 'strike', 'defend',
   'flame_slash', 'guard_up', 'triple_jab', 'brace', 'finishing_blow',
   'step_back', 'riposte', 'tower_shield', 'critical_sword', 'twin_greatsword',
-  'ultimate_slash', 'fortress', 'mist_cut',
+  'ultimate_slash', 'fortress', 'mist_cut', 'retribution_strike',
 ];
 
 // 報酬画面での星ランク別の抽選重み。星3(強力なカード)はだいぶ出にくくする。
@@ -543,7 +544,11 @@ function playCard(index) {
 
   if (card.damage) {
     const hits = card.hits || 1;
-    let dmg = card.damage * hits + (state.player.strength || 0);
+    let baseDamage = card.damage * hits;
+    if (cardId === 'retribution_strike' && state.enemy.isBoss && state.enemy.chargeBonus) {
+      baseDamage *= 2;
+    }
+    let dmg = baseDamage + (state.player.strength || 0);
     if (state.enemy.isBoss && state.enemy.actionType === 'guard') {
       dmg = Math.max(0, Math.round(dmg * 0.35));
     }
