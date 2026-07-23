@@ -36,14 +36,24 @@ battles, card rewards, milestone buffs + boss enemies every 10 floors,
    balance problem — a "feel" finding might mean the right next idea is
    adding a small CSS shake/Web Audio beep rather than a new card.
 4. **Also read `BACKLOG.md` at the repo root, if it exists, as a primary
-   source — not optional extra reading.** `game-usability-tester` and
-   `game-feel-evaluator` maintain their own sections in it for findings
-   they deliberately left unfixed (medium-severity/judgment-call items,
-   not urgent enough to fix the cycle they were found). Commit messages
-   only capture what got *fixed* — they miss exactly the backlog of
-   known-but-deferred gaps that `BACKLOG.md` exists to track. Prefer
-   picking up a real, already-diagnosed backlog item over inventing a
-   new idea from scratch when one fits well as the single best next
+   source — not optional extra reading.** `game-usability-tester`,
+   `game-feel-evaluator`, `game-content-health-auditor`, and
+   `game-human-playtester` each maintain their own section — read all of
+   them, not just the ones you remember from past cycles.
+   `game-usability-tester`/`game-feel-evaluator` log deliberately-left-
+   unfixed findings (medium-severity/judgment-call items, not urgent
+   enough to fix the cycle they were found). `game-content-health-
+   auditor` logs card/buff pool staleness and cross-cycle balance drift
+   — a `content-staleness: N cycles since last new card/buff` entry
+   means you should weight a genuinely new card/buff proposal higher
+   this cycle over another tuning/polish idea. `game-human-playtester`
+   logs judgment-call findings from real play sessions (dead cards,
+   dominant combos, unfair-feeling moments) that a fixed-formula bot
+   can't surface. Commit messages only capture what got *fixed* — they
+   miss exactly the backlog of known-but-deferred gaps that `BACKLOG.md`
+   exists to track. Prefer picking up a real, already-diagnosed backlog
+   item over inventing a new idea from scratch when one fits well as the
+   single best next
    step; you don't have to exhaust the backlog in order, just don't
    ignore it.
 
