@@ -285,6 +285,15 @@ const CARD_LIBRARY = {
   retribution_strike: { id: 'retribution_strike', name: '報復の一撃', cost: 2, type: 'attack', damage: 12, star: 3, desc: '12ダメージを与える(ボスの反撃倍加中は24)' },
 };
 
+// 勝利/ゲームオーバーのオーバーレイを表示するまでの遅延。多段ヒット
+// (hits>=2)の止めカードでちょうど死亡/勝利した場合、120ms刻みでずらして
+// いる連続flashHit演出(playCard参照)がオーバーレイに一瞬で覆い隠されて
+// しまわないよう、その演出が確実に完了しきるまで待つ。CARD_LIBRARY実データ
+// から動的に算出しているので、将来ヒット数の多いカードが増えても自動的に
+// 追従する(hitShakeアニメーション自体の長さ0.3sぶんも上乗せする)。
+const MAX_CARD_HITS = Math.max(1, ...Object.values(CARD_LIBRARY).map((c) => c.hits || 1));
+const OVERLAY_REVEAL_DELAY_MS = (MAX_CARD_HITS - 1) * 120 + 300;
+
 const STARTER_DECK = [
   'strike', 'strike', 'strike', 'strike', 'strike',
   'defend', 'defend', 'defend', 'defend',
@@ -449,6 +458,7 @@ function newGame(difficultyKey) {
   clearEndGameSting();
   clearIntentAlert();
   clearTimersByPrefix('hitSeq');
+  clearTimersByPrefix('endGameOverlayReveal');
   const overlay = document.getElementById('overlay');
   overlay.style.display = 'none';
   overlay.classList.remove('show');
@@ -464,6 +474,7 @@ function backToMenu() {
   clearEndGameSting();
   clearIntentAlert();
   clearTimersByPrefix('hitSeq');
+  clearTimersByPrefix('endGameOverlayReveal');
   const overlay = document.getElementById('overlay');
   overlay.style.display = 'none';
   overlay.classList.remove('show');
@@ -589,6 +600,7 @@ function playCard(index) {
 }
 
 function endPlayerTurn() {
+  if (state.gameOver) return;
   const b = state.battle;
   b.discard.push(...b.hand);
   b.hand = [];
@@ -883,16 +895,21 @@ document.getElementById('endTurnBtn').addEventListener('click', () => {
 });
 
 function endGame(won) {
+  // gameOverは即座に(同期的に)確定させ、以降の入力(カードプレイ/ターン終了)
+  // を確実に無効化する。オーバーレイの「見た目」の表示だけをOVERLAY_REVEAL_DELAY_MS
+  // だけ遅らせ、止めカードのflashHit演出(多段ヒットなら連続演出)を画面を
+  // 覆い隠す前に見せきる。
   state.gameOver = true;
   const overlay = document.getElementById('overlay');
   const text = document.getElementById('overlayText');
   text.textContent = won ? `${MAX_FLOOR}階制覇！ ゲームクリア！` : `ゲームオーバー (${state.floor}階で力尽きた)`;
-  // フェードイン演出を毎回再トリガーできるよう、クラスを外して強制リフローしてから付け直す。
-  // display/クラス変更は同期的なので、ボタンはアニメーション中も即座に押せる。
-  overlay.classList.remove('show');
-  overlay.style.display = 'flex';
-  void overlay.offsetWidth;
-  overlay.classList.add('show');
+  scheduleTimer('endGameOverlayReveal', () => {
+    // フェードイン演出を毎回再トリガーできるよう、クラスを外して強制リフローしてから付け直す。
+    overlay.classList.remove('show');
+    overlay.style.display = 'flex';
+    void overlay.offsetWidth;
+    overlay.classList.add('show');
+  }, OVERLAY_REVEAL_DELAY_MS);
   playEndGameSting(won);
 }
 
