@@ -221,7 +221,7 @@ const CARD_LIBRARY = {
   defend: { id: 'defend', name: 'ディフェンド', cost: 1, type: 'skill', block: 6, star: 1, desc: '6ブロックを得る' },
   bash: { id: 'bash', name: 'バッシュ', cost: 2, type: 'attack', damage: 12, star: 3, desc: '12ダメージを与える' },
   iron_wave: { id: 'iron_wave', name: 'アイアンウェーブ', cost: 2, type: 'attack', damage: 6, block: 8, star: 3, desc: '6ダメージを与え、8ブロックを得る' },
-  double_strike: { id: 'double_strike', name: 'ダブルストライク', cost: 1, type: 'attack', damage: 3, hits: 2, block: 1, star: 3, desc: '3ダメージを2回与え、1ブロックを得る' },
+  double_strike: { id: 'double_strike', name: 'ダブルストライク', cost: 1, type: 'attack', damage: 4, hits: 2, star: 3, desc: '4ダメージを2回与える' },
   shield_bash: { id: 'shield_bash', name: 'シールドバッシュ', cost: 1, type: 'attack', damage: 3, block: 4, star: 1, desc: '3ダメージを与え、4ブロックを得る' },
   quick_slash: { id: 'quick_slash', name: 'クイックスラッシュ', cost: 0, type: 'attack', damage: 3, star: 3, desc: '3ダメージを与える' },
   flame_slash: { id: 'flame_slash', name: 'フレイムスラッシュ', cost: 1, type: 'attack', damage: 7, star: 3, desc: '7ダメージを与える' },
@@ -296,9 +296,9 @@ const BUFF_FLOOR_INTERVAL = 10;
 // すべて「その場限り」の一回性のものに限定する。
 const BUFF_LIBRARY = {
   vigor: {
-    id: 'vigor', name: '活力の心得', desc: '最大HP+16',
+    id: 'vigor', name: '活力の心得', desc: '最大HP+20',
     apply: () => {
-      state.player.maxHp += 16;
+      state.player.maxHp += 20;
     },
   },
   renewal: {

@@ -31,9 +31,17 @@ const MAX_TURNS = 500;
 
 const CCR_CHROMIUM = '/opt/pw-browsers/chromium';
 
+// BUFF_FORCE env var (optional): forces the bot to always take the named
+// buff whenever it appears among the 3 offered, for isolated A/B measurement
+// of one BUFF_LIBRARY entry's real run-level impact (win rate / floor
+// reached) rather than relying on the fixed heuristic priority below. Falls
+// back to the normal heuristic when the forced buff isn't offered.
+const FORCE_BUFF = process.env.BUFF_FORCE || null;
+
 async function playOneRun(page, difficulty) {
   await page.evaluate((diff) => newGame(diff), difficulty);
   const rewardOffers = [];
+  const buffOffers = [];
 
   for (let turn = 0; turn < MAX_TURNS; turn++) {
     const snap = await page.evaluate(() => ({
@@ -46,7 +54,7 @@ async function playOneRun(page, difficulty) {
         won: state.floor >= MAX_FLOOR,
         floor: state.floor,
       }));
-      return { difficulty, won: final.won, floorReached: final.floor, turns: turn, rewardOffers };
+      return { difficulty, won: final.won, floorReached: final.floor, turns: turn, rewardOffers, buffOffers };
     }
 
     if (snap.mode === 'reward') {
@@ -79,22 +87,27 @@ async function playOneRun(page, difficulty) {
     }
 
     if (snap.mode === 'buff') {
-      await page.evaluate(() => {
+      const pick = await page.evaluate((forceBuff) => {
         // Heal if badly hurt, otherwise favor permanent power-ups (might/ward)
         // over one-off maxHP/deck-thin picks.
         const hpRatio = state.player.hp / state.player.maxHp;
-        const priority = hpRatio < 0.5
+        let priority = hpRatio < 0.5
           ? ['renewal', 'insight', 'vigor', 'might', 'ward']
           : ['might', 'insight', 'ward', 'vigor', 'renewal'];
+        if (forceBuff) priority = [forceBuff, ...priority.filter((id) => id !== forceBuff)];
         const cards = Array.from(document.querySelectorAll('#buffCards .card'));
-        if (cards.length === 0) return;
+        if (cards.length === 0) return null;
         let best = cards[0], bestRank = Infinity;
         for (const el of cards) {
           const rank = priority.indexOf(el.dataset.buffId);
           if (rank !== -1 && rank < bestRank) { bestRank = rank; best = el; }
         }
+        const offered = cards.map((el) => el.dataset.buffId);
+        const chosen = best.dataset.buffId;
         best.dispatchEvent(new Event('pointerdown', { bubbles: true, cancelable: true }));
-      });
+        return { offered, chosen };
+      }, FORCE_BUFF);
+      if (pick) buffOffers.push(pick);
       continue;
     }
 
@@ -162,7 +175,7 @@ async function playOneRun(page, difficulty) {
     });
   }
 
-  return { difficulty, won: false, floorReached: -1, turns: MAX_TURNS, timedOut: true, rewardOffers };
+  return { difficulty, won: false, floorReached: -1, turns: MAX_TURNS, timedOut: true, rewardOffers, buffOffers };
 }
 
 async function main() {
@@ -212,6 +225,20 @@ async function main() {
       .map((id) => `${id}:${((chosen[id] || 0) / offered[id] * 100).toFixed(0)}%(${chosen[id] || 0}/${offered[id]})`)
       .join(' ');
     console.log(`[${diff}] reward pick-rate: ${pickRates}`);
+
+    const buffOffered = {};
+    const buffChosen = {};
+    for (const r of rs) {
+      for (const o of (r.buffOffers || [])) {
+        for (const id of o.offered) buffOffered[id] = (buffOffered[id] || 0) + 1;
+        buffChosen[o.chosen] = (buffChosen[o.chosen] || 0) + 1;
+      }
+    }
+    const buffIds = Object.keys(buffOffered).sort();
+    const buffPickRates = buffIds
+      .map((id) => `${id}:${((buffChosen[id] || 0) / buffOffered[id] * 100).toFixed(0)}%(${buffChosen[id] || 0}/${buffOffered[id]})`)
+      .join(' ');
+    console.log(`[${diff}] buff pick-rate: ${buffPickRates}`);
   }
 
   console.log('RAW_JSON:' + JSON.stringify(results));
